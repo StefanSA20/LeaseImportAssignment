@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "LeaseImport": {
+      "commandName": "Project",
+      "commandLineArgs": "samples\\leases.csv samples\\leases.json",
+      "workingDirectory": "E:\\Projects\\Caseware Assignment\\LeaseImport"
+    }
+  }
+}

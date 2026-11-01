@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LeaseImport.Tests/LeaseImport.Tests.csproj" />
+  <Project Path="LeaseImport/LeaseImport.csproj" />
+</Solution>

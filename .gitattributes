@@ -1,0 +1,4 @@
+* text=auto
+*.csv -text
+*.wsf text eol=crlf
+*.cmd text eol=crlf

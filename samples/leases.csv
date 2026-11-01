@@ -1,0 +1,5 @@
+﻿LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals
+L-2001,Property,Office Aarhus,DKK,1250000.50,0,125000.05,0
+L-2002,Vehicles,Fleet (12 cars),DKK,480000.00,60000.00,96000.00,0
+L-2003,Equipment,Printer,DKK,20000.00,0,5000.00,0
+L-2004,Property,Warehouse Odense,EUR,300000.00,0,30000.00,0
