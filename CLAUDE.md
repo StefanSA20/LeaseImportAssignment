@@ -257,13 +257,14 @@ function calculate(leasesJson, answers)    // = calculateFields(buildInput(lease
 | F-06 | AverageClosing | TotalClosing / LeaseCount, from the **unrounded** total, rounded once. `null` if LeaseCount = 0 or TotalClosing is null. |
 | F-07 | ShowRouDisclosure | HasLeases = Yes AND Framework = IFRS |
 | F-08 | ShowMaturityAnalysis | **HasLeases = Yes AND (Framework = IFRS OR EntitySize = Large)** (decision 2) |
-| F-09 | ShowSubleaseDisclosure | **HasSubleases = Yes AND HasLeases = Yes** (decision 3). HasSubleases = Yes with no leases → `"No"` (the inconsistency is documented in NOTES.md, with no output field). |
+| F-09 | ShowSubleaseDisclosure | **HasSubleases = Yes AND HasLeases = Yes** (decision 3). **Special case (agreed):** HasSubleases = `"Yes"` while HasLeases = `"No"` contradicts the data (a sublease needs a lease, and A-03 should have been skipped), so F-09 = **`null`** (can't be calculated). This check runs before the three-valued AND. HasSubleases `"No"`, blank or invalid with no leases → `"No"`. |
 | F-10 | ShowCashOutflow | **`null`**. `TotalCashOutflow` doesn't exist (spec defect, decision 1). |
 
 ### Invalid / missing answers (decision 6): three-valued logic
 - AND: `"No"` if any operand is `"No"`, else `null` if any operand is null/invalid, else `"Yes"`.
 - OR: `"Yes"` if any operand is `"Yes"`, else `null` if any operand is null/invalid, else `"No"`.
-- So F-07/F-08/F-09 are `"No"` whenever HasLeases = No, whatever the answers are.
+- So F-07/F-08 are `"No"` whenever HasLeases = No, whatever the answers are. F-09 too, except
+  the contradiction HasSubleases = `"Yes"` with no leases, which gives `null` (see F-09).
 - HasSubleases blank while leases exist means the question should have been answered,
   so it's unknown and F-09 is `null`.
 
@@ -280,7 +281,8 @@ function calculate(leasesJson, answers)    // = calculateFields(buildInput(lease
 1. F-04 uses the non-existent `KpiRequired`, so it returns null.
 2. F-10 uses the non-existent `TotalCashOutflow`, so it returns null.
 3. F-08 is ambiguous because of operator precedence. We use `HasLeases AND (IFRS OR Large)`.
-4. F-09 contradicts itself (HasSubleases is skipped when there are no leases). We use `HasLeases = Yes`.
+4. F-09 contradicts itself (HasSubleases is skipped when there are no leases). We use `HasLeases = Yes`,
+   and HasSubleases = Yes with no leases (contradicting answers) gives `null`.
 5. F-06 divides by zero, and depends on F-05 being null. Both give null.
 6. F-05 for 0 leases gives 0.
 7. F-05 with a single currency other than the reporting currency (DKK) is calculated as
