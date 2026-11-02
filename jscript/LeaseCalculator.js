@@ -22,11 +22,14 @@ function buildInput(leasesJson, answers) {
         throw new Error("buildInput: leasesJson must contain a JSON object.");
     }
 
+    var leases = copyArray(parsed.Leases, "Leases");
+    validateLeaseAmounts(leases);
+
     return {
         Framework: readAnswer(answers, "Framework"),
         EntitySize: readAnswer(answers, "EntitySize"),
         HasSubleases: readAnswer(answers, "HasSubleases"),
-        Leases: copyArray(parsed.Leases, "Leases"),
+        Leases: leases,
         Problems: copyArray(parsed.Problems, "Problems")
     };
 }
@@ -124,6 +127,25 @@ function or3(a, b) {
 // ---------------------------------------------------------------------------
 // Leases and money (integer cents)
 // ---------------------------------------------------------------------------
+
+var AMOUNT_FIELDS = ["Opening", "Additions", "Depreciation", "Disposals"];
+
+// Every amount of every lease must be a finite number, whatever the currency mix.
+function validateLeaseAmounts(leases) {
+    for (var i = 0; i < leases.length; i++) {
+        var lease = leases[i];
+        if (lease === null || typeof lease !== "object" || isArray(lease)) {
+            throw new Error("buildInput: 'Leases' item " + i + " must be a JSON object.");
+        }
+        for (var j = 0; j < AMOUNT_FIELDS.length; j++) {
+            var value = lease[AMOUNT_FIELDS[j]];
+            if (typeof value !== "number" || !isFinite(value)) {
+                throw new Error("buildInput: lease amount '" + AMOUNT_FIELDS[j] + "' of 'Leases' item "
+                    + i + " is not a finite number.");
+            }
+        }
+    }
+}
 
 function hasMixedCurrency(leases) {
     if (leases.length === 0) {
