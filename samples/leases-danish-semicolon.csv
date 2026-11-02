@@ -1,0 +1,4 @@
+﻿LeaseId;AssetClass;Description;Currency;Opening;Additions;Depreciation;Disposals
+L-6001;Property;Kontor København;DKK;1250000,50;0;125000,05;0
+L-6002;Vehicles;Firmabiler (8);DKK;612500,75;0;122500,15;0
+L-6003;Equipment;Servere Aarhus;DKK;185000,40;0;37000,08;0

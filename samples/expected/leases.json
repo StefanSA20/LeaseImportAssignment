@@ -1,0 +1,13 @@
+{
+  "Leases": [
+    { "Line": 2, "LeaseId": "L-2001", "AssetClass": "Property", "Description": "Office Aarhus",
+      "Currency": "DKK", "Opening": 1250000.50, "Additions": 0, "Depreciation": 125000.05, "Disposals": 0 },
+    { "Line": 3, "LeaseId": "L-2002", "AssetClass": "Vehicles", "Description": "Fleet (12 cars)",
+      "Currency": "DKK", "Opening": 480000.00, "Additions": 60000.00, "Depreciation": 96000.00, "Disposals": 0 },
+    { "Line": 4, "LeaseId": "L-2003", "AssetClass": "Equipment", "Description": "Printer",
+      "Currency": "DKK", "Opening": 20000.00, "Additions": 0, "Depreciation": 5000.00, "Disposals": 0 },
+    { "Line": 5, "LeaseId": "L-2004", "AssetClass": "Property", "Description": "Warehouse Odense",
+      "Currency": "EUR", "Opening": 300000.00, "Additions": 0, "Depreciation": 30000.00, "Disposals": 0 }
+  ],
+  "Problems": []
+}

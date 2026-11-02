@@ -1,0 +1,6 @@
+LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals
+L-6001,Property,Kontor København,DKK,"1.250.000,50",0,125000.05,0
+L-6002,Equipment,Printer Odense,DKK,2000.00,0,"125,50",0
+L-6003,Property,Lager Vejle,DKK,"1250000,50",0,0,0
+L-6004,Vehicles,Varebil,DKK,"1.250",0,0,0
+L-6005,Property,Kontor Aarhus,DKK,1250000.50,0,125000.05,0

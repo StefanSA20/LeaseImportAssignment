@@ -1,0 +1,26 @@
+{
+  "Leases": [
+    { "Line": 2, "LeaseId": "L-8001", "AssetClass": "Property", "Description": "Office Aalborg",
+      "Currency": "DKK", "Opening": 800000.00, "Additions": 0, "Depreciation": 80000.00, "Disposals": 0 },
+    { "Line": 3, "LeaseId": "L-8002", "AssetClass": "Vehicles", "Description": "Pool cars, Aarhus\r\n6 vehicles",
+      "Currency": "DKK", "Opening": 240000.50, "Additions": 30000.00, "Depreciation": 48000.10, "Disposals": 10000.00 },
+    { "Line": 8, "LeaseId": "L-8004", "AssetClass": "Equipment", "Description": "Forklift",
+      "Currency": "DKK", "Opening": 64000.33, "Additions": 0, "Depreciation": 12800.07, "Disposals": 0 },
+    { "Line": 10, "LeaseId": "L-8005", "AssetClass": "Property", "Description": "Archive Esbjerg",
+      "Currency": "DKK", "Opening": 150000.00, "Additions": 0, "Depreciation": 15000.00, "Disposals": 0 }
+  ],
+  "Problems": [
+    { "Line": 5, "LeaseId": "L-8003", "Field": "Opening", "Code": "InvalidNumber",
+      "Message": "This lease can't be processed because 'Opening' has the value '15.000,00', which is not a valid amount. Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50." },
+    { "Line": 7, "LeaseId": "L-8001", "Field": "LeaseId", "Code": "DuplicateLeaseId",
+      "Message": "This lease can't be processed because its ID 'L-8001' is not unique (it already appears on line 2)." },
+    { "Line": 9, "LeaseId": null, "Field": "LeaseId", "Code": "MissingValue",
+      "Message": "This lease can't be processed because 'LeaseId' is empty." },
+    { "Line": 9, "LeaseId": null, "Field": "Currency", "Code": "InvalidCurrency",
+      "Message": "This lease can't be processed because 'XYZ' is not a valid ISO-4217 currency code (use three uppercase letters, e.g. DKK)." },
+    { "Line": 11, "LeaseId": "L-8006", "Field": "Additions", "Code": "MissingValue",
+      "Message": "This lease can't be processed because 'Additions' is empty." },
+    { "Line": 11, "LeaseId": "L-8006", "Field": "Depreciation", "Code": "NegativeAmount",
+      "Message": "This lease can't be processed because 'Depreciation' has the value '-4500.00', which is negative. Amounts must be 0 or more." }
+  ]
+}

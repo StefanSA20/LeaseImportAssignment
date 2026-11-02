@@ -3,7 +3,7 @@
   Windows Script Host runner for the ES3 tests:
     cscript //nologo jscript\tests\run-cscript.wsf
   Classic JScript has no JSON object, so this host supplies JsonParser.parse (validated eval,
-  as in json2.js) and loads the C# fixtures as UTF-8 through ADODB.Stream.
+  as in json2.js) and loads the C# fixtures and samples/expected JSON as UTF-8 through ADODB.Stream.
 -->
 <package>
   <job id="LeaseCalculatorTests">
@@ -27,10 +27,13 @@
 
       var Fixtures = (function () {
         var fso = new ActiveXObject("Scripting.FileSystemObject");
-        var fixturesDir = fso.BuildPath(fso.GetParentFolderName(WScript.ScriptFullName), "fixtures");
+        var testsDir = fso.GetParentFolderName(WScript.ScriptFullName);
+        var fixturesDir = fso.BuildPath(testsDir, "fixtures");
+        var repositoryDir = fso.GetParentFolderName(fso.GetParentFolderName(testsDir));
+        var expectedDir = fso.BuildPath(fso.BuildPath(repositoryDir, "samples"), "expected");
 
-        function readUtf8(name) {
-          var file = fso.BuildPath(fixturesDir, name);
+        function readUtf8(dir, name) {
+          var file = fso.BuildPath(dir, name);
           if (!fso.FileExists(file)) {
             throw new Error("Fixture not found: " + file);
           }
@@ -48,8 +51,10 @@
         }
 
         return {
-          leases: readUtf8("leases.json"),
-          leasesWithProblems: readUtf8("leases_with_problems.json")
+          leases: readUtf8(fixturesDir, "leases.json"),
+          leasesWithProblems: readUtf8(fixturesDir, "leases_with_problems.json"),
+          leasesValidDkk: readUtf8(expectedDir, "leases-valid-dkk.json"),
+          leasesMixed: readUtf8(expectedDir, "leases-mixed.json")
         };
       })();
     ]]></script>

@@ -1,0 +1,9 @@
+LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals
+L-7001,Property,Office Odense,DKK,,0,10000.00,0
+L-7002,Vehicles,Delivery van,DKK,1e5,0,20000.00,0
+L-7003,Equipment,Printer,DKK,20000.005,0,5000.00,0
+L-7004,Property,Storage room,DKK,50000.00,0,-5000.00,0
+L-7005,Equipment,Laptops,BGN,30000.00,0,3000.00,0
+L-7006,Vehicles,Truck,DKK,90000.00,0,9000.00
+L-7001,Property,Office Odense (corrected),DKK,100000.00,0,10000.00,0
+L-7007,Equipment,"Unclosed description,DKK,1000.00,0,0,0

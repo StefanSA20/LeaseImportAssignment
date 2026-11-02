@@ -1,8 +1,9 @@
 // LeaseCalculatorTests.js - tests for LeaseCalculator.js, strict ECMAScript 3 (classic JScript).
 // Expected values come from CLAUDE.md section 6 and hand calculation.
 // The host loads TestRunner.js, LeaseCalculator.js and this file into one context, supplies
-// JsonParser and a global Fixtures object ({ leases: "...", leasesWithProblems: "..." } with the
-// JSON written by the C# importer), then calls TestRunner.run(writeLine).
+// JsonParser and a global Fixtures object ({ leases, leasesWithProblems } with the JSON written by
+// the C# importer, plus { leasesValidDkk, leasesMixed } from the hand-written samples/expected),
+// then calls TestRunner.run(writeLine).
 
 (function () {
     var T = TestRunner;
@@ -713,5 +714,48 @@
         ]);
         var a = answers("IFRS", "Small", "No");
         T.equalFields(calculate(fixture("leasesWithProblems"), a), calculate(withoutProblems, a));
+    });
+
+    // -----------------------------------------------------------------------
+    T.group("End-to-end with hand-written samples/expected JSON");
+    // -----------------------------------------------------------------------
+
+    T.test("samples/expected/leases-valid-dkk.json with IFRS / Medium / No", function () {
+        // L-5001 2450000.00 + 150000.00 - 245000.00 - 50000.00 = 2305000.00
+        // L-5002  612500.75 -  122500.15                      =  490000.60
+        // L-5003  185000.40 -   37000.08                      =  148000.32
+        // L-5004  920000.00 -   92000.00                      =  828000.00
+        // L-5005   75000.01 -   15000.00                      =   60000.01
+        // Total 3831000.93 = 383100093 cents; 383100093 / 5 = 76620018 remainder 3 -> 76620019 -> 766200.19
+        var json = fixture("leasesValidDkk");
+        var input = buildInput(json, answers("IFRS", "Medium", "No"));
+        T.equal(input.Leases.length, 5);
+        T.equal(input.Problems.length, 0);
+        T.equal(input.Leases[0].Description, "Head office K\u00f8benhavn");
+        T.equalFields(calculate(json, answers("IFRS", "Medium", "No")), expected({
+            LeaseCount: 5, HasLeases: "Yes", MixedCurrency: "No", TotalClosing: 3831000.93, AverageClosing: 766200.19,
+            ShowRouDisclosure: "Yes", ShowMaturityAnalysis: "Yes", ShowSubleaseDisclosure: "No"
+        }));
+    });
+
+    T.test("samples/expected/leases-mixed.json with LocalGAAP / Large / Yes", function () {
+        // Accepted (all DKK):
+        // L-8001 (line 2)  800000.00 -  80000.00                       = 720000.00
+        // L-8002 (line 3)  240000.50 + 30000.00 - 48000.10 - 10000.00  = 212000.40
+        // L-8004 (line 8)   64000.33 -  12800.07                       =  51200.26
+        // L-8005 (line 10) 150000.00 -  15000.00                       = 135000.00
+        // Total 1118200.66 = 111820066 cents; 111820066 / 4 = 27955016 remainder 2 (exactly .5)
+        //   -> half away from zero -> 27955017 -> 279550.17
+        // Rejected rows (6 problems) are passed through and not counted.
+        var json = fixture("leasesMixed");
+        var input = buildInput(json, answers("LocalGAAP", "Large", "Yes"));
+        T.equal(input.Leases.length, 4);
+        T.equal(input.Problems.length, 6);
+        T.equal(input.Leases[1].Description, "Pool cars, Aarhus\r\n6 vehicles");
+        T.equal(input.Leases[3].Line, 10);
+        T.equalFields(calculate(json, answers("LocalGAAP", "Large", "Yes")), expected({
+            LeaseCount: 4, HasLeases: "Yes", MixedCurrency: "No", TotalClosing: 1118200.66, AverageClosing: 279550.17,
+            ShowRouDisclosure: "No", ShowMaturityAnalysis: "Yes", ShowSubleaseDisclosure: "Yes"
+        }));
     });
 })();

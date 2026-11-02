@@ -1,0 +1,7 @@
+{
+  "Leases": [],
+  "Problems": [
+    { "Line": 1, "LeaseId": null, "Field": "Currency", "Code": "MissingColumn",
+      "Message": "The file can't be processed because the required column 'Currency' is missing from the header." }
+  ]
+}

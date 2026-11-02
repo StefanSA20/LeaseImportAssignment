@@ -1,0 +1,21 @@
+{
+  "Leases": [],
+  "Problems": [
+    { "Line": 2, "LeaseId": "L-7001", "Field": "Opening", "Code": "MissingValue",
+      "Message": "This lease can't be processed because 'Opening' is empty." },
+    { "Line": 3, "LeaseId": "L-7002", "Field": "Opening", "Code": "InvalidNumber",
+      "Message": "This lease can't be processed because 'Opening' has the value '1e5', which is not a valid amount. Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50." },
+    { "Line": 4, "LeaseId": "L-7003", "Field": "Opening", "Code": "TooManyDecimals",
+      "Message": "This lease can't be processed because 'Opening' has the value '20000.005', which has more than 2 decimals." },
+    { "Line": 5, "LeaseId": "L-7004", "Field": "Depreciation", "Code": "NegativeAmount",
+      "Message": "This lease can't be processed because 'Depreciation' has the value '-5000.00', which is negative. Amounts must be 0 or more." },
+    { "Line": 6, "LeaseId": "L-7005", "Field": "Currency", "Code": "InvalidCurrency",
+      "Message": "This lease can't be processed because 'BGN' is not a valid ISO-4217 currency code (use three uppercase letters, e.g. DKK)." },
+    { "Line": 7, "LeaseId": null, "Field": null, "Code": "InvalidFieldCount",
+      "Message": "This lease can't be processed because it has 7 values, but the header has 8 columns." },
+    { "Line": 8, "LeaseId": "L-7001", "Field": "LeaseId", "Code": "DuplicateLeaseId",
+      "Message": "This lease can't be processed because its ID 'L-7001' is not unique (it already appears on line 2)." },
+    { "Line": 9, "LeaseId": null, "Field": null, "Code": "UnclosedQuote",
+      "Message": "This lease can't be processed because a quoted value starting on line 9 is never closed." }
+  ]
+}

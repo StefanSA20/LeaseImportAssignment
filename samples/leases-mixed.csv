@@ -1,0 +1,11 @@
+﻿LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals
+L-8001,Property,Office Aalborg,DKK,800000.00,0,80000.00,0
+L-8002,Vehicles,"Pool cars, Aarhus
+6 vehicles",DKK,240000.50,30000.00,48000.10,10000.00
+L-8003,Equipment,Copier,DKK,"15.000,00",0,1500.00,0
+
+L-8001,Property,Office Aalborg (again),DKK,800000.00,0,80000.00,0
+L-8004,Equipment,Forklift,DKK,64000.33,0,12800.07,0
+,Property,Row without id,XYZ,100.00,0,0,0
+L-8005,Property,Archive Esbjerg,DKK,150000.00,0,15000.00,0
+L-8006,Vehicles,,DKK,45000.00,,-4500.00,0

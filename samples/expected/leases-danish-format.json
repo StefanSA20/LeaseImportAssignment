@@ -1,0 +1,16 @@
+{
+  "Leases": [
+    { "Line": 6, "LeaseId": "L-6005", "AssetClass": "Property", "Description": "Kontor Aarhus",
+      "Currency": "DKK", "Opening": 1250000.50, "Additions": 0, "Depreciation": 125000.05, "Disposals": 0 }
+  ],
+  "Problems": [
+    { "Line": 2, "LeaseId": "L-6001", "Field": "Opening", "Code": "InvalidNumber",
+      "Message": "This lease can't be processed because 'Opening' has the value '1.250.000,50', which is not a valid amount. Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50." },
+    { "Line": 3, "LeaseId": "L-6002", "Field": "Depreciation", "Code": "InvalidNumber",
+      "Message": "This lease can't be processed because 'Depreciation' has the value '125,50', which is not a valid amount. Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50." },
+    { "Line": 4, "LeaseId": "L-6003", "Field": "Opening", "Code": "InvalidNumber",
+      "Message": "This lease can't be processed because 'Opening' has the value '1250000,50', which is not a valid amount. Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50." },
+    { "Line": 5, "LeaseId": "L-6004", "Field": "Opening", "Code": "TooManyDecimals",
+      "Message": "This lease can't be processed because 'Opening' has the value '1.250', which has more than 2 decimals." }
+  ]
+}

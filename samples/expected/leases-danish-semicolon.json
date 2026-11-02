@@ -1,0 +1,21 @@
+{
+  "Leases": [],
+  "Problems": [
+    { "Line": 1, "LeaseId": null, "Field": "LeaseId", "Code": "MissingColumn",
+      "Message": "The file can't be processed because the required column 'LeaseId' is missing from the header." },
+    { "Line": 1, "LeaseId": null, "Field": "AssetClass", "Code": "MissingColumn",
+      "Message": "The file can't be processed because the required column 'AssetClass' is missing from the header." },
+    { "Line": 1, "LeaseId": null, "Field": "Description", "Code": "MissingColumn",
+      "Message": "The file can't be processed because the required column 'Description' is missing from the header." },
+    { "Line": 1, "LeaseId": null, "Field": "Currency", "Code": "MissingColumn",
+      "Message": "The file can't be processed because the required column 'Currency' is missing from the header." },
+    { "Line": 1, "LeaseId": null, "Field": "Opening", "Code": "MissingColumn",
+      "Message": "The file can't be processed because the required column 'Opening' is missing from the header." },
+    { "Line": 1, "LeaseId": null, "Field": "Additions", "Code": "MissingColumn",
+      "Message": "The file can't be processed because the required column 'Additions' is missing from the header." },
+    { "Line": 1, "LeaseId": null, "Field": "Depreciation", "Code": "MissingColumn",
+      "Message": "The file can't be processed because the required column 'Depreciation' is missing from the header." },
+    { "Line": 1, "LeaseId": null, "Field": "Disposals", "Code": "MissingColumn",
+      "Message": "The file can't be processed because the required column 'Disposals' is missing from the header." }
+  ]
+}

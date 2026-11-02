@@ -1,0 +1,6 @@
+﻿LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals
+L-5001,Property,Head office København,DKK,2450000.00,150000.00,245000.00,50000.00
+L-5002,Vehicles,Company cars (8),DKK,612500.75,0,122500.15,0
+L-5003,Equipment,Servers Aarhus data centre,DKK,185000.40,0,37000.08,0
+L-5004,Property,Warehouse Vejle,DKK,920000.00,0,92000.00,0
+L-5005,Equipment,Forklifts,DKK,75000.01,0,15000.00,0

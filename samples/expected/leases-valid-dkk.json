@@ -1,0 +1,15 @@
+{
+  "Leases": [
+    { "Line": 2, "LeaseId": "L-5001", "AssetClass": "Property", "Description": "Head office København",
+      "Currency": "DKK", "Opening": 2450000.00, "Additions": 150000.00, "Depreciation": 245000.00, "Disposals": 50000.00 },
+    { "Line": 3, "LeaseId": "L-5002", "AssetClass": "Vehicles", "Description": "Company cars (8)",
+      "Currency": "DKK", "Opening": 612500.75, "Additions": 0, "Depreciation": 122500.15, "Disposals": 0 },
+    { "Line": 4, "LeaseId": "L-5003", "AssetClass": "Equipment", "Description": "Servers Aarhus data centre",
+      "Currency": "DKK", "Opening": 185000.40, "Additions": 0, "Depreciation": 37000.08, "Disposals": 0 },
+    { "Line": 5, "LeaseId": "L-5004", "AssetClass": "Property", "Description": "Warehouse Vejle",
+      "Currency": "DKK", "Opening": 920000.00, "Additions": 0, "Depreciation": 92000.00, "Disposals": 0 },
+    { "Line": 6, "LeaseId": "L-5005", "AssetClass": "Equipment", "Description": "Forklifts",
+      "Currency": "DKK", "Opening": 75000.01, "Additions": 0, "Depreciation": 15000.00, "Disposals": 0 }
+  ],
+  "Problems": []
+}

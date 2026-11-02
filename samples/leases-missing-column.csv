@@ -1,0 +1,4 @@
+﻿LeaseId,AssetClass,Description,Opening,Additions,Depreciation,Disposals
+L-9001,Property,Office Kolding,500000.00,0,50000.00,0
+L-9002,Vehicles,Service van,120000.00,0,24000.00,0
+L-9003,Equipment,Scanner,8000.00,0,1600.00,0
