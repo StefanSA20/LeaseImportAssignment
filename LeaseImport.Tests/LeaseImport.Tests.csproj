@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-	<None Include="..\samples\*.csv" Link="samples\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+	 <None Include="..\samples\**\*.*" Link="samples\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
