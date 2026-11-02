@@ -42,6 +42,14 @@ internal static class TestData
 
     public static ImportResult Import(string csv) => LeaseImporter.Import(new StringReader(csv));
 
+    /// <summary>The JSON text exactly as <see cref="LeaseImporter.WriteJson"/> writes it (strict UTF-8 decode).</summary>
+    public static string ToJson(ImportResult result)
+    {
+        using var stream = new MemoryStream();
+        LeaseImporter.WriteJson(result, stream);
+        return new System.Text.UTF8Encoding(false, true).GetString(stream.ToArray());
+    }
+
     public static ImportResult ImportSample()
     {
         using var reader = new StreamReader(SamplePath, detectEncodingFromByteOrderMarks: true);

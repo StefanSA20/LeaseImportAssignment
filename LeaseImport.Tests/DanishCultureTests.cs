@@ -99,7 +99,7 @@ public class DanishCultureTests
         using (new CultureScope(""))
         {
             invariant = ImportSample();
-            invariantJson = LeaseImporter.ToJson(invariant);
+            invariantJson = ToJson(invariant);
         }
 
         ImportResult danish;
@@ -107,7 +107,7 @@ public class DanishCultureTests
         using (new CultureScope(Danish))
         {
             danish = ImportSample();
-            danishJson = LeaseImporter.ToJson(danish);
+            danishJson = ToJson(danish);
         }
 
         Assert.Equal(4, danish.Leases.Count);
@@ -122,7 +122,7 @@ public class DanishCultureTests
     {
         using var scope = new CultureScope(Danish);
 
-        var json = LeaseImporter.ToJson(ImportSample());
+        var json = ToJson(ImportSample());
 
         Assert.Contains("1250000.50", json);
         Assert.Contains("125000.05", json);
@@ -215,7 +215,6 @@ public class DanishCultureTests
         LeaseImporter.WriteJson(result, stream);
         var json = System.Text.Encoding.UTF8.GetString(stream.ToArray());
 
-        Assert.Equal(LeaseImporter.ToJson(result), json);
         Assert.Contains("1250000.50", json);
         Assert.DoesNotContain("1250000,50", json);
     }

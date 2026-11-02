@@ -291,10 +291,25 @@ public class LeaseValidatorTests
 
     // ---------- TooManyDecimals ----------
 
+    [Fact]
+    public void Minus_zero_with_three_decimals_gives_only_InvalidNumber()
+    {
+        // Agreed: a zero with a '-' sign is malformed, so only InvalidNumber is reported,
+        // while 0.000 and +0.000 give TooManyDecimals.
+        foreach (var column in AmountColumns)
+        {
+            var problem = SingleProblem(Validate((column, "-0.000")));
+
+            Assert.Equal("InvalidNumber", problem.Code);
+            Assert.Equal(column, problem.Field);
+        }
+    }
+
     [Theory]
     [InlineData("1.250")]
     [InlineData("0.001")]
     [InlineData("0.000")]
+    [InlineData("+0.000")]
     [InlineData("100.123")]
     [InlineData("1.00000")]
     public void More_than_two_decimals_gives_TooManyDecimals_with_exact_message(string text)

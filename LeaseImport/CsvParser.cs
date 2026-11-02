@@ -6,8 +6,6 @@ namespace LeaseImport;
 
 internal sealed record CsvRecord(int StartLine, IReadOnlyList<string> Fields);
 
-internal sealed record CsvParseResult(IReadOnlyList<CsvRecord> Records, IReadOnlyList<Problem> Problems);
-
 /// <summary>
 /// RFC 4180 tokenizer. Line numbers are physical lines starting at 1; a record keeps the line
 /// it starts on. Blank lines (empty or only spaces/tabs) are skipped but counted. CRLF, LF and a lone CR all end a line.
@@ -17,14 +15,6 @@ internal sealed record CsvParseResult(IReadOnlyList<CsvRecord> Records, IReadOnl
 internal static class CsvParser
 {
     private enum State { FieldStart, Unquoted, Quoted, QuoteInQuoted }
-
-    /// <summary>Reads everything at once. Convenience for callers that don't need streaming.</summary>
-    public static CsvParseResult Parse(TextReader reader)
-    {
-        var problems = new List<Problem>();
-        var records = ReadRecords(reader, problems).ToList();
-        return new CsvParseResult(records, problems);
-    }
 
     /// <summary>
     /// Yields records lazily. Problems found by the tokenizer (an unclosed quote) are added to

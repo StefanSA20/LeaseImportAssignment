@@ -86,8 +86,6 @@ internal static class LeaseImporter
     public static void WriteJson(ImportResult result, Stream output) =>
         JsonSerializer.Serialize(output, result, JsonOptions);
 
-    public static string ToJson(ImportResult result) => JsonSerializer.Serialize(result, JsonOptions);
-
     /// <summary>
     /// Reads the rest of the input after a fatal header, so that the whole file is still decoded
     /// (invalid UTF-8 anywhere makes the input unreadable). Its records are not used.

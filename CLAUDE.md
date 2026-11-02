@@ -148,7 +148,8 @@ output. It gives a non-zero exit code and a message on stderr.
   before it), `00012` / `01.5` (leading zeros) and `-0` / `-0.00` (zero with a minus sign) give
   `InvalidNumber`. `0`, `0.50`, `+0` and `+500.00` are valid. A value that fails the format gets
   only `InvalidNumber`. A well-formed value is then checked for `TooManyDecimals` and
-  `NegativeAmount` (both can apply, e.g. `-1.234`).
+  `NegativeAmount` (both can apply, e.g. `-1.234`). `0.000` and `+0.000` give `TooManyDecimals`;
+  `-0.000` gives only `InvalidNumber` (agreed).
 - **Danish culture (agreed)**: most clients are Danish. On a da-DK machine `.` groups
   thousands and `,` is the decimal point. Parsing and JSON output must **not** depend on
   `CurrentCulture`: always pass `CultureInfo.InvariantCulture`. Danish-formatted values
@@ -170,6 +171,10 @@ output. It gives a non-zero exit code and a message on stderr.
   duplicate, the `DuplicateLeaseId` problem is listed first in that row.
 - CLI exit codes: 0 = JSON written (also when it contains problems), 1 = usage error,
   2 = input missing/unreadable, 3 = output can't be written.
+- **BOM (agreed)**: always check for the BOM. The parser strips a leading U+FEFF; one in the middle
+  of the data is kept as data. In source code the BOM is always written as the escape `'\uFEFF'`,
+  never as a literal (invisible) character. A test fails if any `.cs` file contains a literal
+  U+FEFF anywhere except as the file's own leading byte order mark.
 - Use `System.Text.Json`. No third-party CSV library.
 - **Streaming (agreed)**: the file is read and written as a stream. The parser yields records
   lazily (`IEnumerable`). Rows are validated through the header's column index (no
@@ -263,7 +268,6 @@ From the first code review of the C# importer. Don't implement them without aski
 - m6: a space before an opening quote (`a, "x,y"`) is strict RFC 4180: the quote isn't an
   opener, so the field splits and the row gets `InvalidFieldCount`.
 - m7: a fatal header hides parser problems (e.g. `UnclosedQuote`) later in the file.
-- m8: the BOM is written as an invisible literal U+FEFF in the source. Use `'\uFEFF'`.
 - ProgramTests call the private `Main` by reflection. Proposal: `internal static int Run(args, stdout, stderr)`.
 - Test gaps: stdout mode (1 argument), lone CR line ending, unreadable input other than a missing file.
 

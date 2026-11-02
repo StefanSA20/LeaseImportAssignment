@@ -4,12 +4,21 @@ namespace LeaseImport.Tests;
 
 public class CsvParserTests
 {
-    private static CsvParseResult Parse(string text) => CsvParser.Parse(new StringReader(text));
+    private sealed record ParseResult(IReadOnlyList<CsvRecord> Records, IReadOnlyList<Problem> Problems);
 
-    private static string[][] Fields(CsvParseResult result) =>
+    private static ParseResult Parse(string text) => Parse(new StringReader(text));
+
+    private static ParseResult Parse(TextReader reader)
+    {
+        var problems = new List<Problem>();
+        var records = CsvParser.ReadRecords(reader, problems).ToList();
+        return new ParseResult(records, problems);
+    }
+
+    private static string[][] Fields(ParseResult result) =>
         result.Records.Select(r => r.Fields.ToArray()).ToArray();
 
-    private static int[] Lines(CsvParseResult result) => result.Records.Select(r => r.StartLine).ToArray();
+    private static int[] Lines(ParseResult result) => result.Records.Select(r => r.StartLine).ToArray();
 
     [Fact]
     public void Simple_records_get_physical_line_numbers_starting_at_one()
@@ -22,8 +31,8 @@ public class CsvParserTests
     }
 
     [Theory]
-    [InlineData("﻿a,b\r\n1,2\r\n")]
-    [InlineData("﻿a,b\n1,2\n")]
+    [InlineData("\uFEFFa,b\r\n1,2\r\n")]
+    [InlineData("\uFEFFa,b\n1,2\n")]
     [InlineData("a,b\r\n1,2\r\n")]
     [InlineData("a,b\n1,2\n")]
     [InlineData("a,b\n1,2")]
@@ -38,9 +47,50 @@ public class CsvParserTests
     }
 
     [Fact]
+    public void Bom_constant_is_the_unicode_byte_order_mark()
+    {
+        Assert.Equal('\uFEFF', General.CsvParser.Bom);
+    }
+
+    [Fact]
+    public void Source_files_have_no_hidden_bom_characters_inside_the_code()
+    {
+        // A literal U+FEFF inside code is invisible and easy to lose in an edit. Only a
+        // byte order mark at the very start of a file is allowed.
+        var root = FindRepositoryRoot();
+        var offenders = Directory
+            .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
+                        && !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"))
+            .Where(path => File.ReadAllText(path).TrimStart('\uFEFF').Contains('\uFEFF'))
+            .Select(path => Path.GetRelativePath(root, path))
+            .ToList();
+
+        Assert.Empty(offenders);
+    }
+
+    [Fact]
+    public void Bom_in_the_middle_of_the_file_is_kept_as_data()
+    {
+        var result = Parse("a,b\n\uFEFFx,y");
+
+        Assert.Equal("\uFEFFx", result.Records[1].Fields[0]);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "LeaseImportAssignment.slnx")))
+        {
+            directory = directory.Parent;
+        }
+        return directory?.FullName ?? throw new InvalidOperationException("Repository root not found.");
+    }
+
+    [Fact]
     public void Bom_is_not_part_of_the_first_header_name()
     {
-        var result = Parse("﻿LeaseId,X\n1,2");
+        var result = Parse("\uFEFFLeaseId,X\n1,2");
 
         Assert.Equal("LeaseId", result.Records[0].Fields[0]);
     }
@@ -51,7 +101,7 @@ public class CsvParserTests
         var bytes = new byte[] { 0xEF, 0xBB, 0xBF }.Concat(System.Text.Encoding.UTF8.GetBytes("a,b\r\næø,å\r\n")).ToArray();
         using var reader = new StreamReader(new MemoryStream(bytes), detectEncodingFromByteOrderMarks: true);
 
-        var result = CsvParser.Parse(reader);
+        var result = Parse(reader);
 
         Assert.Equal(new[] { new[] { "a", "b" }, ["æø", "å"] }, Fields(result));
     }

@@ -18,7 +18,7 @@ internal static class General
     {
         public const char Quote = '"';
         public const char Separator = ',';
-        public const char Bom = '﻿';
+        public const char Bom = '\uFEFF';
     }
 
     #endregion

@@ -34,7 +34,7 @@ public class LeaseImporterTests
     [Fact]
     public void Sample_json_contains_contract_values()
     {
-        using var doc = JsonDocument.Parse(LeaseImporter.ToJson(ImportSample()));
+        using var doc = JsonDocument.Parse(ToJson(ImportSample()));
         var first = doc.RootElement.GetProperty("Leases")[0];
 
         Assert.Equal(4, doc.RootElement.GetProperty("Leases").GetArrayLength());
@@ -147,7 +147,7 @@ public class LeaseImporterTests
 
     [Theory]
     [InlineData("")]
-    [InlineData("﻿")]
+    [InlineData("\uFEFF")]
     [InlineData("\n\n")]
     [InlineData("\r\n  \r\n")]
     public void Empty_file_gives_EmptyFile(string csv)
@@ -162,7 +162,7 @@ public class LeaseImporterTests
     [Theory]
     [InlineData(Header)]
     [InlineData(Header + "\r\n")]
-    [InlineData("﻿" + Header + "\n\n\n")]
+    [InlineData("\uFEFF" + Header + "\n\n\n")]
     public void Header_only_is_valid_with_no_leases_and_no_problems(string csv)
     {
         var result = Import(csv);
@@ -372,7 +372,7 @@ public class LeaseImporterTests
     {
         var result = Import(Csv(Header, Row1, "L-2,Property,,DKK,1,0,0", ",Property,B,DKK,1,0,0,0"));
 
-        var json = LeaseImporter.ToJson(result);
+        var json = ToJson(result);
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
@@ -408,7 +408,7 @@ public class LeaseImporterTests
     [Fact]
     public void Json_of_empty_file_writes_null_field()
     {
-        using var doc = JsonDocument.Parse(LeaseImporter.ToJson(Import("")));
+        using var doc = JsonDocument.Parse(ToJson(Import("")));
         var problem = doc.RootElement.GetProperty("Problems")[0];
 
         Assert.Equal(0, doc.RootElement.GetProperty("Leases").GetArrayLength());
@@ -423,7 +423,7 @@ public class LeaseImporterTests
     {
         var result = Import(Csv(Header, "L-1,Property,\"Kontor Århus \"\"Øst\"\" & <Co>\",DKK,1,0,0,0"));
 
-        using var doc = JsonDocument.Parse(LeaseImporter.ToJson(result));
+        using var doc = JsonDocument.Parse(ToJson(result));
 
         Assert.Equal("Kontor Århus \"Øst\" & <Co>", doc.RootElement.GetProperty("Leases")[0].GetProperty("Description").GetString());
     }
@@ -459,9 +459,9 @@ public class LeaseImporterTests
     // ---------- WriteJson (streaming) ----------
 
     [Fact]
-    public void WriteJson_to_a_stream_gives_the_same_text_as_ToJson_without_bom()
+    public void WriteJson_writes_utf8_without_bom_and_keeps_danish_letters()
     {
-        var result = Import(Csv(Header, Row1, "L-2,Vehicles,Bil \"København\",dkk,1.250,0,0,0", "x,y"));
+        var result = Import(Csv(Header, Row1, "L-2,Vehicles,Bil \"København\",dkk,1.250,0,0,0", "x,y", "L-3,Property,Kontor København,DKK,1,0,0,0"));
 
         using var stream = new MemoryStream();
         LeaseImporter.WriteJson(result, stream);
@@ -469,18 +469,10 @@ public class LeaseImporterTests
 
         Assert.True(bytes.Length > 0);
         Assert.False(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF, "WriteJson must not write a BOM");
+        Assert.Equal((byte)'{', bytes[0]);
         var text = new System.Text.UTF8Encoding(false, true).GetString(bytes);
-        Assert.Equal(LeaseImporter.ToJson(result), text);
-    }
-
-    [Fact]
-    public void WriteJson_of_the_sample_matches_ToJson()
-    {
-        var result = ImportSample();
-
-        using var stream = new MemoryStream();
-        LeaseImporter.WriteJson(result, stream);
-
-        Assert.Equal(LeaseImporter.ToJson(result), System.Text.Encoding.UTF8.GetString(stream.ToArray()));
+        Assert.Contains("København", text);
+        using var doc = JsonDocument.Parse(text);
+        Assert.Equal(2, doc.RootElement.GetProperty("Leases").GetArrayLength());
     }
 }
