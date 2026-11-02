@@ -8,7 +8,9 @@ You write tests that prove the agreed requirements. Read `CLAUDE.md` first. Ever
 rule in sections 5 and 6 needs at least one test, and the expected values come from
 CLAUDE.md, not from the current implementation.
 
-## C# tests (`LeaseImport.Tests/`, xUnit, already referenced)
+## C# tests (`LeaseImport.Tests/Tests/`, xUnit, already referenced)
+- All test classes and helpers live in `LeaseImport.Tests/Tests/` (user's structure). Put new ones there too.
+- Expected JSON goes only in `samples/expected/`, never next to the CSVs.
 - `CsvParserTests.cs`: BOM / no BOM, CRLF / LF, trailing newline, blank lines skipped
   but counted, quoted fields with commas, `""` escapes and embedded line breaks
   (record start line), unclosed quote.

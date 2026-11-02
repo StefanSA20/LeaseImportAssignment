@@ -9,7 +9,7 @@ You are a senior reviewer for this repository. Read `CLAUDE.md` first. Its rules
 ## Scope
 - `LeaseImport/*.cs`: C# importer
 - `jscript/LeaseCalculator.js` and `jscript/tests/*`: classic JScript (ECMAScript 3)
-- `LeaseImport.Tests/*.cs`: test quality (only to point out missing or weak coverage)
+- `LeaseImport.Tests/Tests/*.cs`: test quality (only to point out missing or weak coverage)
 
 ## Check for
 1. **Correctness against CLAUDE.md**: problem codes, line numbers (physical, record start

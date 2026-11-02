@@ -30,10 +30,14 @@ LeaseImport/                 C# console app (net10.0, nullable enabled)
   LeaseValidator.cs          one record -> Lease or list of Problems (value rules)
   LeaseImporter.cs           orchestration: header check, rows, duplicates, result
   Program.cs                 CLI: LeaseImport <input.csv> [output.json]
-LeaseImport.Tests/           xUnit tests (CsvParserTests, LeaseValidatorTests, LeaseImporterTests)
+LeaseImport.Tests/           xUnit test project (LeaseImport.Tests.csproj stays at this level)
+  Tests/                     ALL test classes and test helpers live here (user's structure), e.g.
+                             CsvParserTests, LeaseValidatorTests, LeaseImporterTests, DanishCultureTests,
+                             ProgramTests, JscriptFixtureTests, SampleFilesIntegrationTests, TestSupport
 samples/leases.csv           sample from the brief (UTF-8 with BOM, CRLF). Never change it.
 samples/*.csv                extra test CSVs (UTF-8, CRLF, some with BOM, some without)
-samples/expected/*.json      hand-written expected importer JSON, same base name as the CSV
+samples/expected/*.json      hand-written expected importer JSON, same base name as the CSV.
+                             Expected JSON lives ONLY here, never next to the CSVs in samples/.
 jscript/
   LeaseCalculator.js         ES3 calculator (the deliverable)
   tests/TestRunner.js        tiny ES3 assertion framework
@@ -287,6 +291,9 @@ From the first code review of the C# importer. Don't implement them without aski
 - An integration test imports every `samples/<name>.csv` that has a `samples/expected/<name>.json`
   and compares them (semantic JSON comparison: amounts compared as decimals).
 - Test CSVs are UTF-8 with CRLF line endings, some with a BOM and some without.
+
+- New C# test classes go in `LeaseImport.Tests/Tests/`. The test csproj copies everything under
+  `samples/` (recursively) to the test output folder; tests locate files via the repo root.
 
 ## 10. Working conventions
 - Agents live in `.claude/agents/`: `analyze-brief`, `code-reviewer`,

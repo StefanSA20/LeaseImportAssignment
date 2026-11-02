@@ -52,6 +52,6 @@ your spec. Don't add fields, codes or rules that aren't there. Ask instead.
 
 ## How to work
 - Build and run against `samples/leases.csv`. Expected result: 4 leases, 0 problems.
-- Coordinate with the tests in `LeaseImport.Tests/`. Run `dotnet test` and report the real output.
+- Coordinate with the tests in `LeaseImport.Tests/Tests/`. Run `dotnet test` and report the real output.
 - If the .NET SDK is missing, install it with `apt-get install -y dotnet-sdk-10.0` (CLAUDE.md section 3)
   or say clearly that nothing was compiled.
