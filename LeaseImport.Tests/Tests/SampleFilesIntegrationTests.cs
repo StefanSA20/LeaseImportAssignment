@@ -28,7 +28,7 @@ public class SampleFilesIntegrationTests
     ];
 
     /// <summary>Samples that are not valid UTF-8, so the CLI must refuse them (exit 2, no JSON).</summary>
-    internal static readonly string[] UnreadableSamples =
+    public static readonly string[] UnreadableSamples =
     [
         "leases-excel-ansi", "leases-excel-utf16",
     ];
@@ -167,7 +167,7 @@ public class SampleFilesIntegrationTests
 
     private static string Describe(JsonElement element) => $"{element.ValueKind} {element.GetRawText()}";
 
-    internal static List<string> FindSamplesWithExpectedJson()
+    public static List<string> FindSamplesWithExpectedJson()
     {
         var samples = Path.Combine(FindRepositoryRoot(), "samples");
         return Directory.EnumerateFiles(samples, "*.csv")
@@ -178,7 +178,7 @@ public class SampleFilesIntegrationTests
             .ToList();
     }
 
-    internal static string FindRepositoryRoot()
+    public static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "LeaseImportAssignment.slnx")))

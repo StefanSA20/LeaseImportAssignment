@@ -4,7 +4,11 @@ namespace LeaseImport.Tests.Tests;
 
 public class CsvParserTests
 {
-    private sealed record ParseResult(IReadOnlyList<CsvRecord> Records, IReadOnlyList<Problem> Problems);
+    private sealed class ParseResult
+    {
+        public List<CsvRecord> Records { get; set; } = [];
+        public List<Problem> Problems { get; set; } = [];
+    }
 
     private static ParseResult Parse(string text) => Parse(new StringReader(text));
 
@@ -12,7 +16,7 @@ public class CsvParserTests
     {
         var problems = new List<Problem>();
         var records = CsvParser.ReadRecords(reader, problems).ToList();
-        return new ParseResult(records, problems);
+        return new ParseResult { Records = records, Problems = problems };
     }
 
     private static string[][] Fields(ParseResult result) =>

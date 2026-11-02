@@ -7,7 +7,7 @@ public class LeaseValidatorTests
 {
     private const int Line = 7;
 
-    internal static Dictionary<string, string> ValidRow(params (string Column, string Value)[] overrides)
+    public static Dictionary<string, string> ValidRow(params (string Column, string Value)[] overrides)
     {
         var values = new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -27,15 +27,15 @@ public class LeaseValidatorTests
         return values;
     }
 
-    internal static ValidationResult Validate(params (string Column, string Value)[] overrides) =>
+    public static ValidationResult Validate(params (string Column, string Value)[] overrides) =>
         ValidateRow(Line, ValidRow(overrides));
 
     /// <summary>Calls the validator with the row's values as fields and the column positions taken from its keys.</summary>
-    internal static ValidationResult ValidateRow(int line, Dictionary<string, string> row) =>
+    public static ValidationResult ValidateRow(int line, Dictionary<string, string> row) =>
         LeaseValidator.Validate(line, row.Values.ToArray(),
             row.Keys.Select((column, index) => (column, index)).ToDictionary(c => c.column, c => c.index, StringComparer.Ordinal));
 
-    internal static Problem SingleProblem(ValidationResult result)
+    public static Problem SingleProblem(ValidationResult result)
     {
         Assert.Null(result.Lease);
         return Assert.Single(result.Problems);

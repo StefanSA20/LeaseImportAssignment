@@ -4,7 +4,7 @@ using LeaseImport.Common;
 namespace LeaseImport.Tests.Tests;
 
 /// <summary>Sets CurrentCulture and CurrentUICulture for the current thread and restores them on Dispose.</summary>
-internal sealed class CultureScope : IDisposable
+public sealed class CultureScope : IDisposable
 {
     private readonly CultureInfo _culture;
     private readonly CultureInfo _uiCulture;
@@ -31,7 +31,7 @@ public sealed class CultureCollection
 {
 }
 
-internal static class TestData
+public static class TestData
 {
     public const string Header = "LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals";
 
@@ -61,7 +61,7 @@ internal static class TestData
 /// Property-by-property comparison of the model classes (they have no value equality).
 /// Amounts are compared as decimals (1.5m equals 1.50m), strings ordinally, nulls exactly.
 /// </summary>
-internal static class ModelAssert
+public static class ModelAssert
 {
     public static void AssertLease(Lease expected, Lease? actual)
     {

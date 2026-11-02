@@ -76,6 +76,8 @@ public class Lease
   `string?` with no default, so they're written as `null`.
 - Collections (e.g. `ImportResult.Leases`/`Problems`) are initialised to empty lists.
 - Classes have no value equality, so tests compare properties, not whole objects.
+- **No `record` types and no `internal` anywhere in the solution**, the test project included
+  (test helpers such as `TestData`, `ModelAssert` and `CultureScope` are public too).
 
 ## 3. Environment
 
