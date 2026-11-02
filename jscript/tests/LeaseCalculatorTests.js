@@ -2,7 +2,8 @@
 // Expected values come from CLAUDE.md section 6 and hand calculation.
 // The host loads TestRunner.js, LeaseCalculator.js and this file into one context, supplies
 // JsonParser and a global Fixtures object ({ leases, leasesWithProblems } with the JSON written by
-// the C# importer, plus { leasesValidDkk, leasesMixed } from the hand-written samples/expected),
+// the C# importer, plus { leasesValidDkk, leasesMixed, leasesAllEur, leasesUnusualText } from the
+// hand-written samples/expected),
 // then calls TestRunner.run(writeLine).
 
 (function () {
@@ -239,7 +240,11 @@
     // -----------------------------------------------------------------------
 
     T.test("0 leases: Total 0, Average null, Show fields No, F-04/F-10 null", function () {
-        T.equalFields(calculate(NO_LEASES, answers("IFRS", "Large", "Yes")), expected({}));
+        T.equalFields(calculate(NO_LEASES, answers("IFRS", "Large", "No")), expected({}));
+    });
+
+    T.test("0 leases with HasSubleases Yes: same, except ShowSubleaseDisclosure null (contradiction)", function () {
+        T.equalFields(calculate(NO_LEASES, answers("IFRS", "Large", "Yes")), expected({ ShowSubleaseDisclosure: null }));
     });
 
     T.test("1 lease", function () {
@@ -295,7 +300,9 @@
 
     T.test("only Problems and no leases gives the 0-lease result", function () {
         var json = doc([], [problem(2, "L-1", "Opening", "InvalidNumber", "x")]);
-        T.equalFields(calculate(json, answers("IFRS", "Large", "Yes")), expected({}));
+        T.equalFields(calculate(json, answers("IFRS", "Large", "No")), expected({}), "HasSubleases No");
+        T.equalFields(calculate(json, answers("IFRS", "Large", "Yes")), expected({ ShowSubleaseDisclosure: null }),
+            "HasSubleases Yes (contradiction -> F-09 null)");
     });
 
     // -----------------------------------------------------------------------
@@ -546,13 +553,67 @@
         T.equal(calculate(ONE_LEASE, answers("IFRS", "Large", true)).ShowSubleaseDisclosure, null, "true");
     });
 
-    T.test("without leases: Yes, No, blank and invalid -> No", function () {
-        T.equal(calculate(NO_LEASES, answers("IFRS", "Large", "Yes")).ShowSubleaseDisclosure, "No", "Yes");
+    T.test("without leases: Yes -> null (contradicting answers, CLAUDE.md F-09 special case)", function () {
+        T.equal(calculate(NO_LEASES, answers("IFRS", "Large", "Yes")).ShowSubleaseDisclosure, null, "IFRS Large");
+        T.equal(calculate(NO_LEASES, answers("LocalGAAP", "Micro", "Yes")).ShowSubleaseDisclosure, null, "LocalGAAP Micro");
+        T.equal(calculate(NO_LEASES, { HasSubleases: "Yes" }).ShowSubleaseDisclosure, null, "other answers missing");
+    });
+
+    T.test("without leases: No, blank and invalid -> No", function () {
         T.equal(calculate(NO_LEASES, answers("IFRS", "Large", "No")).ShowSubleaseDisclosure, "No", "No");
         T.equal(calculate(NO_LEASES, answers("IFRS", "Large", "")).ShowSubleaseDisclosure, "No", "empty string");
         T.equal(calculate(NO_LEASES, answers("IFRS", "Large", null)).ShowSubleaseDisclosure, "No", "null");
         T.equal(calculate(NO_LEASES, { Framework: "IFRS", EntitySize: "Large" }).ShowSubleaseDisclosure, "No", "missing");
         T.equal(calculate(NO_LEASES, answers("IFRS", "Large", "yes")).ShowSubleaseDisclosure, "No", "invalid");
+    });
+
+    // The 8 combinations HasSubleases Yes / No / blank / invalid x without / with leases (CLAUDE.md section 6, F-09).
+    var F09_MATRIX = [
+        { leases: false, hasSubleases: "Yes", expected: null },
+        { leases: false, hasSubleases: "No", expected: "No" },
+        { leases: false, hasSubleases: "", expected: "No" },
+        { leases: false, hasSubleases: "maybe", expected: "No" },
+        { leases: true, hasSubleases: "Yes", expected: "Yes" },
+        { leases: true, hasSubleases: "No", expected: "No" },
+        { leases: true, hasSubleases: "", expected: null },
+        { leases: true, hasSubleases: "maybe", expected: null }
+    ];
+
+    function f09Label(row) {
+        return (row.leases ? "with leases" : "without leases") + ", HasSubleases \"" + row.hasSubleases + "\" -> "
+            + (row.expected === null ? "null" : row.expected);
+    }
+
+    for (var f09 = 0; f09 < F09_MATRIX.length; f09++) {
+        (function (row) {
+            T.test("F-09 matrix: " + f09Label(row), function () {
+                var r = calculate(row.leases ? ONE_LEASE : NO_LEASES, answers("IFRS", "Large", row.hasSubleases));
+                T.equal(r.ShowSubleaseDisclosure, row.expected, "ShowSubleaseDisclosure");
+                T.hasExactKeys(r, RESULT_KEYS);
+                if (!row.leases) {
+                    // F-07 / F-08 stay No without leases, whatever HasSubleases is.
+                    T.equal(r.ShowRouDisclosure, "No", "ShowRouDisclosure");
+                    T.equal(r.ShowMaturityAnalysis, "No", "ShowMaturityAnalysis");
+                } else {
+                    T.equal(r.ShowRouDisclosure, "Yes", "ShowRouDisclosure");
+                    T.equal(r.ShowMaturityAnalysis, "Yes", "ShowMaturityAnalysis");
+                }
+            });
+        })(F09_MATRIX[f09]);
+    }
+
+    T.test("without leases, HasSubleases Yes: F-07 / F-08 stay No for every Framework / EntitySize", function () {
+        var frameworks = ["IFRS", "LocalGAAP", "ifrs", null];
+        var sizes = ["Micro", "Small", "Medium", "Large", "large", null];
+        for (var f = 0; f < frameworks.length; f++) {
+            for (var s = 0; s < sizes.length; s++) {
+                var r = calculate(NO_LEASES, answers(frameworks[f], sizes[s], "Yes"));
+                var label = frameworks[f] + " / " + sizes[s];
+                T.equal(r.ShowRouDisclosure, "No", "F-07 " + label);
+                T.equal(r.ShowMaturityAnalysis, "No", "F-08 " + label);
+                T.equal(r.ShowSubleaseDisclosure, null, "F-09 " + label);
+            }
+        }
     });
 
     // -----------------------------------------------------------------------
@@ -756,6 +817,71 @@
         T.equalFields(calculate(json, answers("LocalGAAP", "Large", "Yes")), expected({
             LeaseCount: 4, HasLeases: "Yes", MixedCurrency: "No", TotalClosing: 1118200.66, AverageClosing: 279550.17,
             ShowRouDisclosure: "No", ShowMaturityAnalysis: "Yes", ShowSubleaseDisclosure: "Yes"
+        }));
+    });
+
+    T.test("samples/expected/leases-all-eur.json: single non-DKK currency is calculated (in EUR)", function () {
+        // Agreed business risk (CLAUDE.md section 7, item 7): every lease is in EUR, so MixedCurrency is No and
+        // the totals are calculated as the spec says, but they are EUR amounts, not the reporting currency DKK.
+        // No currency field is added to the result.
+        // L-9101 450000.00 + 25000.00 - 47500.00 - 0       = 427500.00 = 42750000 cents
+        // L-9102  82000.50 +        0 - 16400.11 - 1200.00 =  64400.39 =  6440039 cents
+        // L-9103  12500.00 +        0 -  2500.04 - 0       =   9999.96 =   999996 cents
+        // Total 50190035 cents = 501900.35; 50190035 / 3 = 16730011 remainder 2 (0.67 >= 0.5)
+        //   -> 16730012 cents = 167300.12
+        var json = fixture("leasesAllEur");
+        var input = buildInput(json, answers("IFRS", "Small", "No"));
+        T.equal(input.Leases.length, 3);
+        T.equal(input.Problems.length, 0);
+        for (var i = 0; i < input.Leases.length; i++) {
+            T.equal(input.Leases[i].Currency, "EUR", "lease " + i);
+        }
+        var r = calculate(json, answers("IFRS", "Small", "No"));
+        T.hasExactKeys(r, RESULT_KEYS);
+        T.equalFields(r, expected({
+            LeaseCount: 3, HasLeases: "Yes", MixedCurrency: "No", TotalClosing: 501900.35, AverageClosing: 167300.12,
+            ShowRouDisclosure: "Yes", ShowMaturityAnalysis: "Yes", ShowSubleaseDisclosure: "No"
+        }));
+    });
+
+    T.test("samples/expected/leases-unusual-text.json: buildInput passes text through unchanged", function () {
+        // 🏢 = U+1F3E2 office building, 🚗 = U+1F697 car,
+        // 𝔸 = U+1D538 double-struck A, 𠜎 = U+2070E CJK ideograph, ́ = combining acute.
+        var input = buildInput(fixture("leasesUnusualText"), answers("LocalGAAP", "Medium", "Yes"));
+        var leases = input.Leases;
+        T.equal(leases.length, 7);
+        T.equal(leases[0].Description, "Office \"Nord\" Aarhus", "escaped quotes");
+        T.equal(leases[1].Description, "Company car 🚗 Odense", "car emoji");
+        T.equal(leases[2].Description, "Math 𝔸 and rare 𠜎 glyphs", "4-byte letters");
+        T.equal(leases[3].Description, "Lager Ærøskøbing Øst Åbyhøj æøå ÆØÅ",
+            "Danish letters");
+        T.equal(leases[4].Description, "Vesterbro Café", "combining accent");
+        T.equal(leases[4].Description.length, 15, "combining accent is a separate code unit, not normalized");
+        T.equal(leases[5].Description, "🏢 HQ, \"Tower A\" 🏢", "comma, quotes and emoji");
+        T.equal(leases[6].AssetClass, "🏢 Buildings", "AssetClass with emoji");
+        T.equal(leases[1].Description.length, "Company car  Odense".length + 2, "emoji is a surrogate pair");
+        T.equal(leases[6].AssetClass.charCodeAt(0), 0xD83C, "high surrogate");
+        T.equal(leases[6].AssetClass.charCodeAt(1), 0xDFE2, "low surrogate");
+        T.equal(input.Problems.length, 1);
+        T.equal(input.Problems[0].Code, "InvalidCurrency");
+        T.equal(input.Problems[0].Line, 9);
+        T.equal(input.Problems[0].Message, "This lease can't be processed because 'D🏢K' is not a valid "
+            + "ISO-4217 currency code (use three uppercase letters, e.g. DKK).", "4-byte character in the message");
+    });
+
+    T.test("samples/expected/leases-unusual-text.json: calculation with LocalGAAP / Medium / Yes", function () {
+        // Accepted (all DKK); the D<emoji>K row is rejected and not counted.
+        // L-7001 100000.00 - 10000.00 =  90000.00 =  9000000 cents
+        // L-7002  50000.50 -  5000.05 =  45000.45 =  4500045 cents
+        // L-7003   1000.01 -     0    =   1000.01 =   100001 cents
+        // L-7004  20000.00 -  2000.00 =  18000.00 =  1800000 cents
+        // L-7005   3000.00 -  1000.00 =   2000.00 =   200000 cents
+        // L-7006 500000.00 - 50000.00 = 450000.00 = 45000000 cents
+        // L-7007   7000.00 -     0.01 =   6999.99 =   699999 cents
+        // Total 61300045 cents = 613000.45; 61300045 / 7 = 8757149 remainder 2 (0.29 < 0.5) -> 87571.49
+        T.equalFields(calculate(fixture("leasesUnusualText"), answers("LocalGAAP", "Medium", "Yes")), expected({
+            LeaseCount: 7, HasLeases: "Yes", MixedCurrency: "No", TotalClosing: 613000.45, AverageClosing: 87571.49,
+            ShowRouDisclosure: "No", ShowMaturityAnalysis: "No", ShowSubleaseDisclosure: "Yes"
         }));
     });
 })();

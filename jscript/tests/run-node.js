@@ -22,6 +22,8 @@ const context = vm.createContext({
         leasesWithProblems: readUtf8(path.join(testsDir, "fixtures", "leases_with_problems.json")),
         leasesValidDkk: readUtf8(path.join(expectedDir, "leases-valid-dkk.json")),
         leasesMixed: readUtf8(path.join(expectedDir, "leases-mixed.json")),
+        leasesAllEur: readUtf8(path.join(expectedDir, "leases-all-eur.json")),
+        leasesUnusualText: readUtf8(path.join(expectedDir, "leases-unusual-text.json")),
     },
 });
 

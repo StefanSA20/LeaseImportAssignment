@@ -1,0 +1,11 @@
+{
+  "Leases": [
+    { "Line": 2, "LeaseId": "L-9101", "AssetClass": "Property", "Description": "Office Hamburg",
+      "Currency": "EUR", "Opening": 450000.00, "Additions": 25000.00, "Depreciation": 47500.00, "Disposals": 0 },
+    { "Line": 3, "LeaseId": "L-9102", "AssetClass": "Vehicles", "Description": "Van fleet Berlin",
+      "Currency": "EUR", "Opening": 82000.50, "Additions": 0, "Depreciation": 16400.11, "Disposals": 1200.00 },
+    { "Line": 4, "LeaseId": "L-9103", "AssetClass": "Equipment", "Description": "Printers Munich",
+      "Currency": "EUR", "Opening": 12500.00, "Additions": 0, "Depreciation": 2500.04, "Disposals": 0 }
+  ],
+  "Problems": []
+}

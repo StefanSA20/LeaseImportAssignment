@@ -44,7 +44,7 @@ jscript/
   tests/LeaseCalculatorTests.js
   tests/run-node.js          Node host: JsonParser shim + loads the ES3 files
   tests/run-cscript.wsf      Windows Script Host runner (cscript) for the same tests
-NOTES.md                     hand-in notes
+NOTES.md                     hand-in notes (the user writes them into the README)
 ```
 
 **`General` (agreed structure)**: `public static class General` in `Common/General.cs` holds
@@ -314,10 +314,29 @@ From the first code review of the C# importer. Don't implement them without aski
   and compares them (semantic JSON comparison: amounts compared as decimals).
 - Test CSVs are UTF-8 with CRLF line endings, some with a BOM and some without.
 
+- Unicode (agreed, tested): text is passed through unchanged, incl. `""` quotes, Danish letters,
+  combining accents (not normalized) and 4-byte characters (emoji, U+1D538, U+2070E). System.Text.Json
+  may write 4-byte characters as `\uD83C\uDFE2` escapes; decoding must give the identical string.
+- `samples/leases-all-eur.csv` demonstrates spec problem 7 end to end (total calculated in EUR, no
+  currency field). `samples/leases-unusual-text.csv` covers the Unicode rule.
 - New C# test classes go in `LeaseImport.Tests/Tests/`. The test csproj copies everything under
   `samples/` (recursively) to the test output folder; tests locate files via the repo root.
 
-## 10. Working conventions
+## 10. Status and open items (as of the last session)
+Done: C# importer, JScript calculator, C# + JScript tests, 18 sample files with hand-written expected
+JSON, F-09 contradiction rule, all-EUR and Unicode samples. Open:
+- README (incl. the NOTES content) is being written by the user.
+- Decisions still to double-check with the user: strict UTF-8 (rejects whole Excel ANSI/UTF-16
+  exports); whole-file/row loss from small mistakes (`sep=,` line, duplicated column, trailing `,,,`).
+- Unconfirmed: the JScript check that throws when a `Leases` item isn't an object (added by an agent,
+  not yet agreed or tested).
+- Deferred review items in section 8.
+- No code review yet of the JScript part, nor of the C# after the later refactors.
+- `run-cscript.wsf` has never been executed on Windows.
+- `jscript/tests/fixtures/*.json` duplicate data that also exists in `samples/expected/`.
+- Unchosen test ideas: negative closing end to end, large generated file (memory), CLI → JScript pipeline.
+
+## 11. Working conventions
 - Agents live in `.claude/agents/`: `analyze-brief`, `code-reviewer`,
   `unit-tests-generator`, `json-importer`, `jscript-generator`.
 - Keep code small and readable. Prefer clear names over comments.

@@ -1,0 +1,22 @@
+{
+  "Leases": [
+    { "Line": 2, "LeaseId": "L-7001", "AssetClass": "Property", "Description": "Office \"Nord\" Aarhus",
+      "Currency": "DKK", "Opening": 100000.00, "Additions": 0, "Depreciation": 10000.00, "Disposals": 0 },
+    { "Line": 3, "LeaseId": "L-7002", "AssetClass": "Vehicles", "Description": "Company car 🚗 Odense",
+      "Currency": "DKK", "Opening": 50000.50, "Additions": 0, "Depreciation": 5000.05, "Disposals": 0 },
+    { "Line": 4, "LeaseId": "L-7003", "AssetClass": "Equipment", "Description": "Math 𝔸 and rare 𠜎 glyphs",
+      "Currency": "DKK", "Opening": 1000.01, "Additions": 0, "Depreciation": 0, "Disposals": 0 },
+    { "Line": 5, "LeaseId": "L-7004", "AssetClass": "Property", "Description": "Lager Ærøskøbing Øst Åbyhøj æøå ÆØÅ",
+      "Currency": "DKK", "Opening": 20000.00, "Additions": 0, "Depreciation": 2000.00, "Disposals": 0 },
+    { "Line": 6, "LeaseId": "L-7005", "AssetClass": "Equipment", "Description": "Vesterbro Cafe\u0301",
+      "Currency": "DKK", "Opening": 3000.00, "Additions": 0, "Depreciation": 1000.00, "Disposals": 0 },
+    { "Line": 7, "LeaseId": "L-7006", "AssetClass": "Property", "Description": "🏢 HQ, \"Tower A\" 🏢",
+      "Currency": "DKK", "Opening": 500000.00, "Additions": 0, "Depreciation": 50000.00, "Disposals": 0 },
+    { "Line": 8, "LeaseId": "L-7007", "AssetClass": "🏢 Buildings", "Description": "Annex",
+      "Currency": "DKK", "Opening": 7000.00, "Additions": 0, "Depreciation": 0.01, "Disposals": 0 }
+  ],
+  "Problems": [
+    { "Line": 9, "LeaseId": "L-7008", "Field": "Currency", "Code": "InvalidCurrency",
+      "Message": "This lease can't be processed because 'D🏢K' is not a valid ISO-4217 currency code (use three uppercase letters, e.g. DKK)." }
+  ]
+}

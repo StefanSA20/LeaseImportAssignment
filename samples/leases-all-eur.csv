@@ -1,0 +1,4 @@
+LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals
+L-9101,Property,Office Hamburg,EUR,450000.00,25000.00,47500.00,0
+L-9102,Vehicles,Van fleet Berlin,EUR,82000.50,0,16400.11,1200.00
+L-9103,Equipment,Printers Munich,EUR,12500.00,0,2500.04,0

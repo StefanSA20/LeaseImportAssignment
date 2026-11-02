@@ -1,0 +1,9 @@
+﻿LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals
+L-7001,Property,"Office ""Nord"" Aarhus",DKK,100000.00,0,10000.00,0
+L-7002,Vehicles,Company car 🚗 Odense,DKK,50000.50,0,5000.05,0
+L-7003,Equipment,Math 𝔸 and rare 𠜎 glyphs,DKK,1000.01,0,0,0
+L-7004,Property,Lager Ærøskøbing Øst Åbyhøj æøå ÆØÅ,DKK,20000.00,0,2000.00,0
+L-7005,Equipment,Vesterbro Café,DKK,3000.00,0,1000.00,0
+L-7006,Property,"🏢 HQ, ""Tower A"" 🏢",DKK,500000.00,0,50000.00,0
+L-7007,🏢 Buildings,Annex,DKK,7000.00,0,0.01,0
+L-7008,Property,Bad currency,D🏢K,1000.00,0,0,0

@@ -24,7 +24,7 @@ public class SampleFilesIntegrationTests
         "leases_with_problems",
         "leases-excel-sep-hint", "leases-trailing-separators-rows", "leases-trailing-separators-all",
         "leases-duplicate-column", "leases-extra-columns", "leases-reordered-columns", "leases-header-only",
-        "leases-id-case-whitespace",
+        "leases-id-case-whitespace", "leases-all-eur", "leases-unusual-text",
     ];
 
     /// <summary>Samples that are not valid UTF-8, so the CLI must refuse them (exit 2, no JSON).</summary>
@@ -57,7 +57,7 @@ public class SampleFilesIntegrationTests
     public void All_samples_are_found()
     {
         Assert.Equal(HandWrittenSamples.Length, FindSamplesWithExpectedJson().Count);
-        Assert.Equal(16, HandWrittenSamples.Length);
+        Assert.Equal(18, HandWrittenSamples.Length);
     }
 
     [Fact]

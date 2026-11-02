@@ -54,7 +54,9 @@
           leases: readUtf8(fixturesDir, "leases.json"),
           leasesWithProblems: readUtf8(fixturesDir, "leases_with_problems.json"),
           leasesValidDkk: readUtf8(expectedDir, "leases-valid-dkk.json"),
-          leasesMixed: readUtf8(expectedDir, "leases-mixed.json")
+          leasesMixed: readUtf8(expectedDir, "leases-mixed.json"),
+          leasesAllEur: readUtf8(expectedDir, "leases-all-eur.json"),
+          leasesUnusualText: readUtf8(expectedDir, "leases-unusual-text.json")
         };
       })();
     ]]></script>
