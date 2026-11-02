@@ -1,0 +1,4 @@
+﻿LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals,,
+L-8301,Property,Office Aarhus,DKK,1250000.50,0,125000.05,0,,
+L-8302,Property,Warehouse Hamburg,EUR,300000.00,0,30000.00,0,,
+L-8303,Equipment,,DKK,20000.00,0,5000.00,0,,

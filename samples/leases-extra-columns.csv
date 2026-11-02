@@ -1,0 +1,4 @@
+LeaseId,CostCenter,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals,Notes
+L-8501,CC-100,Property,Office Aarhus,DKK,1250000.50,0,125000.05,0,Renewal due 2027
+L-8502,CC-200,Vehicles,Fleet (12 cars),DKK,480000.00,60000.00,96000.00,0,"Note, with a comma"
+L-8503,not a number,Equipment,Printer,DKK,20000.00,0,5000.00,0,

@@ -1,0 +1,16 @@
+{
+  "Leases": [
+    { "Line": 2, "LeaseId": "L-8201", "AssetClass": "Property", "Description": "Office Aarhus",
+      "Currency": "DKK", "Opening": 1250000.50, "Additions": 0, "Depreciation": 125000.05, "Disposals": 0 },
+    { "Line": 4, "LeaseId": "L-8203", "AssetClass": "Equipment", "Description": "Printer",
+      "Currency": "DKK", "Opening": 20000.00, "Additions": 0, "Depreciation": 5000.00, "Disposals": 0 },
+    { "Line": 6, "LeaseId": "L-8202", "AssetClass": "Vehicles", "Description": "Delivery van (fixed)",
+      "Currency": "DKK", "Opening": 250000.00, "Additions": 0, "Depreciation": 50000.00, "Disposals": 0 }
+  ],
+  "Problems": [
+    { "Line": 3, "LeaseId": null, "Field": null, "Code": "InvalidFieldCount",
+      "Message": "This lease can't be processed because it has 11 values, but the header has 8 columns." },
+    { "Line": 5, "LeaseId": null, "Field": null, "Code": "InvalidFieldCount",
+      "Message": "This lease can't be processed because it has 11 values, but the header has 8 columns." }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "Leases": [
+    { "Line": 2, "LeaseId": "L-3001", "AssetClass": "Property", "Description": "Head office Copenhagen",
+      "Currency": "DKK", "Opening": 1000000.00, "Additions": 50000.00, "Depreciation": 100000.00, "Disposals": 0 },
+    { "Line": 3, "LeaseId": "L-3002", "AssetClass": "Vehicles", "Description": "Delivery van",
+      "Currency": "DKK", "Opening": 250000.25, "Additions": 0, "Depreciation": 50000.10, "Disposals": 0 },
+    { "Line": 7, "LeaseId": "L-3005", "AssetClass": "Equipment", "Description": "Laptops",
+      "Currency": "DKK", "Opening": 30000.00, "Additions": 0, "Depreciation": 10000.01, "Disposals": 0.00 }
+  ],
+  "Problems": [
+    { "Line": 4, "LeaseId": "L-3001", "Field": "LeaseId", "Code": "DuplicateLeaseId",
+      "Message": "This lease can't be processed because its ID 'L-3001' is not unique (it already appears on line 2)." },
+    { "Line": 5, "LeaseId": "L-3003", "Field": "Opening", "Code": "InvalidNumber",
+      "Message": "This lease can't be processed because 'Opening' has the value '1.250,50', which is not a valid amount. Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50." },
+    { "Line": 6, "LeaseId": "L-3004", "Field": "Currency", "Code": "InvalidCurrency",
+      "Message": "This lease can't be processed because 'XYZ' is not a valid ISO-4217 currency code (use three uppercase letters, e.g. DKK)." },
+    { "Line": 8, "LeaseId": "L-3006", "Field": "Opening", "Code": "InvalidNumber",
+      "Message": "This lease can't be processed because 'Opening' has the value 'abc', which is not a valid amount. Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50." }
+  ]
+}

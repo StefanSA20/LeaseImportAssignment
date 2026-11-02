@@ -1,0 +1,18 @@
+{
+  "Leases": [
+    { "Line": 2, "LeaseId": "L-1001", "AssetClass": "Property", "Description": "Office Aarhus",
+      "Currency": "DKK", "Opening": 1000.00, "Additions": 0, "Depreciation": 100.00, "Disposals": 0 },
+    { "Line": 3, "LeaseId": "l-1001", "AssetClass": "Property", "Description": "Lower-case id",
+      "Currency": "DKK", "Opening": 2000.00, "Additions": 0, "Depreciation": 0, "Disposals": 0 },
+    { "Line": 7, "LeaseId": "L-1002", "AssetClass": "Vehicles", "Description": "Delivery van",
+      "Currency": "DKK", "Opening": 6000.00, "Additions": 0, "Depreciation": 0, "Disposals": 0 }
+  ],
+  "Problems": [
+    { "Line": 4, "LeaseId": "L-1001", "Field": "LeaseId", "Code": "DuplicateLeaseId",
+      "Message": "This lease can't be processed because its ID 'L-1001' is not unique (it already appears on line 2)." },
+    { "Line": 5, "LeaseId": "L-1001", "Field": "LeaseId", "Code": "DuplicateLeaseId",
+      "Message": "This lease can't be processed because its ID 'L-1001' is not unique (it already appears on line 2)." },
+    { "Line": 6, "LeaseId": "L-1001", "Field": "LeaseId", "Code": "DuplicateLeaseId",
+      "Message": "This lease can't be processed because its ID 'L-1001' is not unique (it already appears on line 2)." }
+  ]
+}

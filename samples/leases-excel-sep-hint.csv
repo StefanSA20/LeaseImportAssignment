@@ -1,0 +1,4 @@
+﻿sep=,
+LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals
+L-8101,Property,Office Aarhus,DKK,1250000.50,0,125000.05,0
+L-8102,Vehicles,Delivery van,DKK,250000.00,0,50000.00,0

@@ -1,0 +1,3 @@
+﻿LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals,Opening
+L-8401,Property,Office Aarhus,DKK,1250000.50,0,125000.05,0,1250000.50
+L-8402,Vehicles,Delivery van,DKK,abc,0,50000.00,0,250000.00

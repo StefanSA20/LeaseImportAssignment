@@ -21,6 +21,16 @@ public class SampleFilesIntegrationTests
     [
         "leases", "leases-valid-dkk", "leases-invalid", "leases-mixed",
         "leases-danish-format", "leases-missing-column", "leases-danish-semicolon",
+        "leases_with_problems",
+        "leases-excel-sep-hint", "leases-trailing-separators-rows", "leases-trailing-separators-all",
+        "leases-duplicate-column", "leases-extra-columns", "leases-reordered-columns", "leases-header-only",
+        "leases-id-case-whitespace",
+    ];
+
+    /// <summary>Samples that are not valid UTF-8, so the CLI must refuse them (exit 2, no JSON).</summary>
+    internal static readonly string[] UnreadableSamples =
+    [
+        "leases-excel-ansi", "leases-excel-utf16",
     ];
 
     public static TheoryData<string> SamplesWithExpectedJson()
@@ -40,6 +50,34 @@ public class SampleFilesIntegrationTests
         foreach (var name in HandWrittenSamples)
         {
             Assert.Contains(name, found);
+        }
+    }
+
+    [Fact]
+    public void All_samples_are_found()
+    {
+        Assert.Equal(HandWrittenSamples.Length, FindSamplesWithExpectedJson().Count);
+        Assert.Equal(16, HandWrittenSamples.Length);
+    }
+
+    [Fact]
+    public void Every_sample_csv_has_expected_json_or_is_listed_as_unreadable()
+    {
+        var withJson = FindSamplesWithExpectedJson();
+        var samples = Path.Combine(FindRepositoryRoot(), "samples");
+        var unaccounted = Directory.EnumerateFiles(samples, "*.csv")
+            .Select(Path.GetFileNameWithoutExtension)
+            .OfType<string>()
+            .Where(name => !withJson.Contains(name) && !UnreadableSamples.Contains(name))
+            .ToList();
+
+        Assert.True(unaccounted.Count == 0,
+            "Every samples/*.csv needs samples/expected/<name>.json or an entry in UnreadableSamples: "
+            + string.Join(", ", unaccounted));
+        foreach (var name in UnreadableSamples)
+        {
+            Assert.True(File.Exists(Path.Combine(samples, name + ".csv")), $"samples/{name}.csv is missing");
+            Assert.DoesNotContain(name, withJson);
         }
     }
 
@@ -129,7 +167,7 @@ public class SampleFilesIntegrationTests
 
     private static string Describe(JsonElement element) => $"{element.ValueKind} {element.GetRawText()}";
 
-    private static List<string> FindSamplesWithExpectedJson()
+    internal static List<string> FindSamplesWithExpectedJson()
     {
         var samples = Path.Combine(FindRepositoryRoot(), "samples");
         return Directory.EnumerateFiles(samples, "*.csv")
@@ -140,7 +178,7 @@ public class SampleFilesIntegrationTests
             .ToList();
     }
 
-    private static string FindRepositoryRoot()
+    internal static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "LeaseImportAssignment.slnx")))
@@ -148,5 +186,55 @@ public class SampleFilesIntegrationTests
             directory = directory.Parent;
         }
         return directory?.FullName ?? throw new InvalidOperationException("Repository root not found.");
+    }
+}
+
+/// <summary>
+/// Files Danish users really produce from Excel that are not UTF-8 (cp1252/ANSI, UTF-16 LE "Unicode text").
+/// Decoding is strict (CLAUDE.md section 5), so the CLI exits with 2, writes a message to stderr and creates no JSON.
+/// Runs in the "Culture" collection because it redirects Console.Error, like ProgramTests.
+/// </summary>
+[Collection("Culture")]
+public sealed class UnreadableSampleFilesTests : IDisposable
+{
+    private readonly string _dir = Path.Combine(Path.GetTempPath(), "LeaseImportTests-" + Guid.NewGuid().ToString("N"));
+
+    public UnreadableSampleFilesTests() => Directory.CreateDirectory(_dir);
+
+    public void Dispose() => Directory.Delete(_dir, recursive: true);
+
+    public static TheoryData<string> UnreadableSamples()
+    {
+        var data = new TheoryData<string>();
+        foreach (var name in SampleFilesIntegrationTests.UnreadableSamples)
+        {
+            data.Add(name);
+        }
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(UnreadableSamples))]
+    public void Non_utf8_sample_gives_exit_code_2_and_stderr_mentioning_utf8_and_no_output(string name)
+    {
+        var input = Path.Combine(SampleFilesIntegrationTests.FindRepositoryRoot(), "samples", name + ".csv");
+        var output = Path.Combine(_dir, name + ".json");
+
+        var (exitCode, stdErr) = ProgramTests.Run(input, output);
+
+        Assert.Equal(2, exitCode);
+        Assert.Contains("UTF-8", stdErr, StringComparison.Ordinal);
+        Assert.False(File.Exists(output));
+    }
+
+    [Theory]
+    [InlineData("leases-excel-ansi", new byte[] { 0x4C, 0x65 })]
+    [InlineData("leases-excel-utf16", new byte[] { 0xFF, 0xFE, 0x4C, 0x00 })]
+    public void Unreadable_sample_has_the_intended_encoding(string name, byte[] expectedStart)
+    {
+        var bytes = File.ReadAllBytes(Path.Combine(SampleFilesIntegrationTests.FindRepositoryRoot(), "samples", name + ".csv"));
+
+        Assert.Equal(expectedStart, bytes.Take(expectedStart.Length).ToArray());
+        Assert.Throws<DecoderFallbackException>(() => General.Program.StrictUtf8.GetString(bytes));
     }
 }

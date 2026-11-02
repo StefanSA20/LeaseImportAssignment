@@ -1,0 +1,18 @@
+{
+  "Leases": [
+    { "Line": 2, "LeaseId": "L-8601", "AssetClass": "Property", "Description": "Office Aarhus",
+      "Currency": "DKK", "Opening": 1250000.50, "Additions": 0, "Depreciation": 125000.05, "Disposals": 0 },
+    { "Line": 3, "LeaseId": "L-8602", "AssetClass": "Property", "Description": "Warehouse Odense",
+      "Currency": "EUR", "Opening": 300000.00, "Additions": 0, "Depreciation": 30000.00, "Disposals": 0 }
+  ],
+  "Problems": [
+    { "Line": 4, "LeaseId": "L-8603", "Field": "AssetClass", "Code": "MissingValue",
+      "Message": "This lease can't be processed because 'AssetClass' is empty." },
+    { "Line": 4, "LeaseId": "L-8603", "Field": "Currency", "Code": "InvalidCurrency",
+      "Message": "This lease can't be processed because 'dkk' is not a valid ISO-4217 currency code (use three uppercase letters, e.g. DKK)." },
+    { "Line": 4, "LeaseId": "L-8603", "Field": "Opening", "Code": "TooManyDecimals",
+      "Message": "This lease can't be processed because 'Opening' has the value '20000.005', which has more than 2 decimals." },
+    { "Line": 4, "LeaseId": "L-8603", "Field": "Depreciation", "Code": "NegativeAmount",
+      "Message": "This lease can't be processed because 'Depreciation' has the value '-5000.00', which is negative. Amounts must be 0 or more." }
+  ]
+}

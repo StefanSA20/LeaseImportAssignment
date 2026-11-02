@@ -1,0 +1,4 @@
+﻿Currency,Disposals,Depreciation,Additions,Opening,Description,AssetClass,LeaseId
+DKK,0,125000.05,0,1250000.50,Office Aarhus,Property,L-8601
+EUR,0,30000.00,0,300000.00,Warehouse Odense,Property,L-8602
+dkk,0,-5000.00,0,20000.005,Printer,,L-8603

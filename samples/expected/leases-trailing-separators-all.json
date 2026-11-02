@@ -1,0 +1,11 @@
+{
+  "Leases": [
+    { "Line": 2, "LeaseId": "L-8301", "AssetClass": "Property", "Description": "Office Aarhus",
+      "Currency": "DKK", "Opening": 1250000.50, "Additions": 0, "Depreciation": 125000.05, "Disposals": 0 },
+    { "Line": 3, "LeaseId": "L-8302", "AssetClass": "Property", "Description": "Warehouse Hamburg",
+      "Currency": "EUR", "Opening": 300000.00, "Additions": 0, "Depreciation": 30000.00, "Disposals": 0 },
+    { "Line": 4, "LeaseId": "L-8303", "AssetClass": "Equipment", "Description": "",
+      "Currency": "DKK", "Opening": 20000.00, "Additions": 0, "Depreciation": 5000.00, "Disposals": 0 }
+  ],
+  "Problems": []
+}

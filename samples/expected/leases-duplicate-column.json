@@ -1,0 +1,7 @@
+{
+  "Leases": [],
+  "Problems": [
+    { "Line": 1, "LeaseId": null, "Field": "Opening", "Code": "DuplicateColumn",
+      "Message": "The file can't be processed because the column 'Opening' appears more than once in the header." }
+  ]
+}

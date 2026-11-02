@@ -1,0 +1,7 @@
+LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals
+L-1001,Property,Office Aarhus,DKK,1000.00,0,100.00,0
+l-1001,Property,Lower-case id,DKK,2000.00,0,0,0
+ L-1001 ,Property,Spaces around id,DKK,3000.00,0,0,0
+"  L-1001",Property,Quoted with leading spaces,DKK,4000.00,0,0,0
+L-1001	,Property,Tab after id,DKK,5000.00,0,0,0
+  L-1002  ,Vehicles,Delivery van,DKK,6000.00,0,0,0

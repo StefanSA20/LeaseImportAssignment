@@ -13,7 +13,7 @@ public sealed class ProgramTests : IDisposable
 
     public void Dispose() => Directory.Delete(_dir, recursive: true);
 
-    private static (int ExitCode, string StdErr) Run(params string[] args)
+    internal static (int ExitCode, string StdErr) Run(params string[] args)
     {
         var main = typeof(LeaseImporter).Assembly.GetType("LeaseImport.Program")!
             .GetMethod("Main", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)!;
