@@ -22,8 +22,9 @@ CLAUDE.md, not from the current implementation.
   `CurrentUICulture` to `new CultureInfo("da-DK")` and restores them afterwards. Under
   da-DK, check that:
   - `1250000.50`, `0`, `125000.05` parse to the right values (not 125000050 etc.);
-  - Danish-formatted values `1.250.000,50`, `125,50`, `1.250` and `1250000,50` are rejected
-    with `InvalidNumber` (a quoted `"125,50"` too, so the comma doesn't just split fields);
+  - Danish-formatted values `1.250.000,50`, `125,50` and `1250000,50` are rejected with
+    `InvalidNumber` (quoted, e.g. `"125,50"`, so the comma doesn't just split fields), and
+    `1.250` is rejected with `TooManyDecimals` (a valid invariant number with 3 decimals);
   - the full import of `samples/leases.csv` gives the same result as under the invariant culture;
   - the JSON output uses `.` as the decimal point (`1250000.50`) and never `,`.
   Mark these tests so they don't run in parallel with other culture-sensitive tests (e.g. an

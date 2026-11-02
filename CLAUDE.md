@@ -103,7 +103,7 @@ output. It gives a non-zero exit code and a message on stderr.
 ## 5. C# rules (agreed, section B)
 
 - **Encoding / lines**: UTF-8 with or without BOM. CRLF or LF. Line numbers are
-  **physical** lines and the header is line 1. Skip blank lines, but they still count.
+  **physical** lines and the header is line 1. Skip blank lines (empty or whitespace-only), but they still count.
   A trailing newline is not a row.
 - **Quoting**: full RFC 4180: `"..."` fields, `""` escapes, commas and line breaks
   inside quotes. A record's `Line` is the line where it **starts**. No `string.Split(',')`.
@@ -118,15 +118,21 @@ output. It gives a non-zero exit code and a message on stderr.
 - **Description**: optional (may be empty).
 - **Currency**: required, must be in a hard-coded list of active ISO-4217 codes, exact
   uppercase (`dkk` is rejected, not fixed). Non-DKK currencies are **valid**, because
-  mixed currency is handled in JScript.
+  mixed currency is handled in JScript. Only circulating codes: fund, precious-metal, test
+  and `XXX` codes and **retired codes** (BGN since 2026-01-01, HRK, ANG, SLL, ZWL, CUC) are
+  rejected. Agreed: no grace period in code. NOTES.md mentions that recently retired codes
+  (e.g. BGN) could get a 6-month grace period as a later special case.
 - **Amounts** (Opening, Additions, Depreciation, Disposals): required (empty means
   `MissingValue`, never 0). `decimal` parsed with the invariant culture: `.` as the decimal
-  point, optional leading `-` (so negatives can be reported as `NegativeAmount`), no
+  point, optional leading sign (`+500.00` is accepted as 500.00; `-` is parsed so negatives
+  can be reported as `NegativeAmount`), no
   thousands separators, no exponent, no NaN/Infinity, at most 2 decimals, and `>= 0`.
 - **Danish culture (agreed)**: most clients are Danish. On a da-DK machine `.` groups
   thousands and `,` is the decimal point. Parsing and JSON output must **not** depend on
   `CurrentCulture`: always pass `CultureInfo.InvariantCulture`. Danish-formatted values
-  (`1.250.000,50`, `125,50`, `1.250`) are **rejected** as `InvalidNumber`, not accepted.
+  are **rejected**, not accepted: `1.250.000,50`, `125,50` and `1250000,50` give `InvalidNumber`.
+  `1.250` is a valid invariant number with 3 decimals, so it gives `TooManyDecimals`
+  (agreed: no special case for Danish grouping).
   There must be tests that run with `CultureInfo.CurrentCulture`/`CurrentUICulture` set to
   `new CultureInfo("da-DK")` (restored afterwards) to prove that `1250000.50` still
   parses to 1250000.50, Danish-formatted values are rejected, and the JSON output keeps `.`
@@ -135,6 +141,13 @@ output. It gives a non-zero exit code and a message on stderr.
   (including a negative closing). That belongs to the JScript part and its tests.
 - **Report every problem in a row**, one Problem per field/rule. Don't stop at the first.
 - An empty file with only a header is valid: 0 leases, 0 problems.
+- Implementation choices (accepted): `DuplicateColumn` only for required columns (extra
+  columns are ignored). Stray quotes RFC 4180 doesn't allow (`ab"c`) are kept literally. An
+  unclosed quote in the header gives only `UnclosedQuote`. The decimal scale counts, so `0.000`
+  gives `TooManyDecimals`. A row with `InvalidFieldCount` doesn't mark its id as seen. On a
+  duplicate, the `DuplicateLeaseId` problem is listed first in that row.
+- CLI exit codes: 0 = JSON written (also when it contains problems), 1 = usage error,
+  2 = input missing/unreadable, 3 = output can't be written.
 - Use `System.Text.Json`. No third-party CSV library.
 
 ## 6. JScript rules
