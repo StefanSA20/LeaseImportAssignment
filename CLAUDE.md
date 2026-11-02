@@ -328,12 +328,14 @@ JSON, F-09 contradiction rule, all-EUR and Unicode samples. Open:
 - README (incl. the NOTES content) is being written by the user.
 - Decisions still to double-check with the user: strict UTF-8 (rejects whole Excel ANSI/UTF-16
   exports); whole-file/row loss from small mistakes (`sep=,` line, duplicated column, trailing `,,,`).
-- Unconfirmed: the JScript check that throws when a `Leases` item isn't an object (added by an agent,
-  not yet agreed or tested).
+- The JScript part was reviewed and approved by the user (including the check that throws when a
+  `Leases` item isn't an object).
 - Deferred review items in section 8.
-- No code review yet of the JScript part, nor of the C# after the later refactors.
+- No agent code review of the C# after the later refactors.
 - `run-cscript.wsf` has never been executed on Windows.
-- `jscript/tests/fixtures/*.json` duplicate data that also exists in `samples/expected/`.
+- The JScript tests read their end-to-end JSON only from `samples/expected/` (the old
+  `jscript/tests/fixtures/` copies were removed; `SampleFilesIntegrationTests` keeps that JSON in
+  sync with the importer).
 - Unchosen test ideas: negative closing end to end, large generated file (memory), CLI → JScript pipeline.
 
 ## 11. Working conventions

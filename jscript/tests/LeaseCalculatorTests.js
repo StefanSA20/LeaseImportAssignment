@@ -721,7 +721,7 @@
     });
 
     // -----------------------------------------------------------------------
-    T.group("End-to-end with C# importer output (fixtures)");
+    T.group("End-to-end with samples/expected JSON (leases, leases_with_problems)");
     // -----------------------------------------------------------------------
 
     function fixture(name) {
