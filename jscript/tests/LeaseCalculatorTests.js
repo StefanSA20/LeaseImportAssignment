@@ -845,27 +845,29 @@
     });
 
     T.test("samples/expected/leases-unusual-text.json: buildInput passes text through unchanged", function () {
-        // 🏢 = U+1F3E2 office building, 🚗 = U+1F697 car,
-        // 𝔸 = U+1D538 double-struck A, 𠜎 = U+2070E CJK ideograph, ́ = combining acute.
+        // Characters are written as \u escapes on purpose: cscript reads .js files included with src=
+        // in the ANSI code page, so raw UTF-8 literals would be misread on Windows.
+        // U+1F3E2 office building, U+1F697 car, U+1D538 double-struck A, U+2070E CJK ideograph,
+        // U+0301 combining acute.
         var input = buildInput(fixture("leasesUnusualText"), answers("LocalGAAP", "Medium", "Yes"));
         var leases = input.Leases;
         T.equal(leases.length, 7);
         T.equal(leases[0].Description, "Office \"Nord\" Aarhus", "escaped quotes");
-        T.equal(leases[1].Description, "Company car 🚗 Odense", "car emoji");
-        T.equal(leases[2].Description, "Math 𝔸 and rare 𠜎 glyphs", "4-byte letters");
-        T.equal(leases[3].Description, "Lager Ærøskøbing Øst Åbyhøj æøå ÆØÅ",
+        T.equal(leases[1].Description, "Company car \uD83D\uDE97 Odense", "car emoji");
+        T.equal(leases[2].Description, "Math \uD835\uDD38 and rare \uD841\uDF0E glyphs", "4-byte letters");
+        T.equal(leases[3].Description, "Lager \u00C6r\u00F8sk\u00F8bing \u00D8st \u00C5byh\u00F8j \u00E6\u00F8\u00E5 \u00C6\u00D8\u00C5",
             "Danish letters");
-        T.equal(leases[4].Description, "Vesterbro Café", "combining accent");
+        T.equal(leases[4].Description, "Vesterbro Cafe\u0301", "combining accent");
         T.equal(leases[4].Description.length, 15, "combining accent is a separate code unit, not normalized");
-        T.equal(leases[5].Description, "🏢 HQ, \"Tower A\" 🏢", "comma, quotes and emoji");
-        T.equal(leases[6].AssetClass, "🏢 Buildings", "AssetClass with emoji");
+        T.equal(leases[5].Description, "\uD83C\uDFE2 HQ, \"Tower A\" \uD83C\uDFE2", "comma, quotes and emoji");
+        T.equal(leases[6].AssetClass, "\uD83C\uDFE2 Buildings", "AssetClass with emoji");
         T.equal(leases[1].Description.length, "Company car  Odense".length + 2, "emoji is a surrogate pair");
         T.equal(leases[6].AssetClass.charCodeAt(0), 0xD83C, "high surrogate");
         T.equal(leases[6].AssetClass.charCodeAt(1), 0xDFE2, "low surrogate");
         T.equal(input.Problems.length, 1);
         T.equal(input.Problems[0].Code, "InvalidCurrency");
         T.equal(input.Problems[0].Line, 9);
-        T.equal(input.Problems[0].Message, "This lease can't be processed because 'D🏢K' is not a valid "
+        T.equal(input.Problems[0].Message, "This lease can't be processed because 'D\uD83C\uDFE2K' is not a valid "
             + "ISO-4217 currency code (use three uppercase letters, e.g. DKK).", "4-byte character in the message");
     });
 

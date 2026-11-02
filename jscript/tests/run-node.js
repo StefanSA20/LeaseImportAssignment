@@ -27,11 +27,29 @@ const context = vm.createContext({
     },
 });
 
-for (const file of [
+const es3Files = [
     path.join(testsDir, "TestRunner.js"),
     path.join(jscriptDir, "LeaseCalculator.js"),
     path.join(testsDir, "LeaseCalculatorTests.js"),
-]) {
+];
+
+// cscript reads files included with <script src="..."> in the ANSI code page, so any non-ASCII
+// character in these files would be misread on Windows. Non-ASCII text must use \u escapes.
+const asciiOffenders = [];
+for (const file of es3Files.concat([path.join(testsDir, "run-cscript.wsf")])) {
+    readUtf8(file).split(/\r?\n/).forEach((line, index) => {
+        if (/[^\x00-\x7F]/.test(line)) {
+            asciiOffenders.push(`${path.relative(jscriptDir, file)}:${index + 1}`);
+        }
+    });
+}
+if (asciiOffenders.length > 0) {
+    console.log("FAIL [ASCII only] non-ASCII characters found (use \\u escapes): " + asciiOffenders.join(", "));
+    process.exitCode = 1;
+    return;
+}
+
+for (const file of es3Files) {
     vm.runInContext(readUtf8(file), context, { filename: file });
 }
 

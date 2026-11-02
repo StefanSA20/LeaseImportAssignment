@@ -216,6 +216,11 @@ Not allowed: `JSON`, `let`/`const`, arrow functions, classes, template strings,
 **trailing commas** in object/array literals, reserved words as property names with
 dot access (`obj.class`, `obj.default`), `"use strict"`-dependent behaviour.
 Use `var`, `for` loops, `typeof`, `Object.prototype.toString.call(x) === "[object Array]"`.
+- **ASCII only (agreed after a Windows failure)**: the ES3 files (`LeaseCalculator.js`, `TestRunner.js`,
+  `LeaseCalculatorTests.js`) and `run-cscript.wsf` contain only ASCII. cscript reads files included
+  with `<script src>` in the ANSI code page, so raw UTF-8 literals are misread on Windows. Non-ASCII
+  text uses `\u` escapes (surrogate pairs for 4-byte characters). `run-node.js` fails the run if any
+  of these files contains a non-ASCII character.
 
 ### API
 ```js
@@ -332,7 +337,7 @@ JSON, F-09 contradiction rule, all-EUR and Unicode samples. Open:
   `Leases` item isn't an object).
 - Deferred review items in section 8.
 - No agent code review of the C# after the later refactors.
-- `run-cscript.wsf` has never been executed on Windows.
+- `run-cscript.wsf` was run on Windows by the user; its only failure (raw UTF-8 literals in the test file) is fixed.
 - The JScript tests read their end-to-end JSON only from `samples/expected/` (the old
   `jscript/tests/fixtures/` copies were removed; `SampleFilesIntegrationTests` keeps that JSON in
   sync with the importer).
