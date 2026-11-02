@@ -31,7 +31,9 @@ LeaseImport/                 C# console app (net10.0, nullable enabled)
   LeaseImporter.cs           orchestration: header check, rows, duplicates, result
   Program.cs                 CLI: LeaseImport <input.csv> [output.json]
 LeaseImport.Tests/           xUnit tests (CsvParserTests, LeaseValidatorTests, LeaseImporterTests)
-samples/leases.csv           sample from the brief (UTF-8 with BOM, CRLF)
+samples/leases.csv           sample from the brief (UTF-8 with BOM, CRLF). Never change it.
+samples/*.csv                extra test CSVs (UTF-8, CRLF, some with BOM, some without)
+samples/expected/*.json      hand-written expected importer JSON, same base name as the CSV
 jscript/
   LeaseCalculator.js         ES3 calculator (the deliverable)
   tests/TestRunner.js        tiny ES3 assertion framework
@@ -277,7 +279,16 @@ From the first code review of the C# importer. Don't implement them without aski
 - ProgramTests call the private `Main` by reflection. Proposal: `internal static int Run(args, stdout, stderr)`.
 - Test gaps: stdout mode (1 argument), lone CR line ending, unreadable input other than a missing file.
 
-## 9. Working conventions
+## 9. Test data (agreed)
+- The `unit-tests-generator` agent **may add test files under `samples/`** (CSV inputs and
+  `samples/expected/<name>.json`). `samples/leases.csv` itself is never changed.
+- Expected JSON is written **by hand from the rules in this file**, never by running the
+  importer and copying the output. If the importer disagrees, that is a finding to report.
+- An integration test imports every `samples/<name>.csv` that has a `samples/expected/<name>.json`
+  and compares them (semantic JSON comparison: amounts compared as decimals).
+- Test CSVs are UTF-8 with CRLF line endings, some with a BOM and some without.
+
+## 10. Working conventions
 - Agents live in `.claude/agents/`: `analyze-brief`, `code-reviewer`,
   `unit-tests-generator`, `json-importer`, `jscript-generator`.
 - Keep code small and readable. Prefer clear names over comments.

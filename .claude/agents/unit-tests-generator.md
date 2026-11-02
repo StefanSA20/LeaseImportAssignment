@@ -33,8 +33,13 @@ CLAUDE.md, not from the current implementation.
   order, extra columns ignored, missing/duplicate columns are fatal, wrong field count,
   duplicate LeaseId (first kept, message text exact), duplicate of a rejected row,
   empty file, header only, JSON shape (PascalCase, nulls written, no Severity).
-- Use `[Theory]`/`[InlineData]` for value tables. Build CSV input from strings. Don't add
-  test files on disk except the existing `samples/leases.csv`.
+- Use `[Theory]`/`[InlineData]` for value tables. Build small CSV inputs from strings.
+- **You may add test files under `samples/`** (CLAUDE.md section 9): CSV inputs, plus a hand-written
+  `samples/expected/<same name>.json` for each. Never change `samples/leases.csv`. Write the
+  expected JSON from the CLAUDE.md rules, **not** by running the importer. Save the CSVs as UTF-8
+  with CRLF, some with a BOM and some without, and write them byte-exact (e.g. with Python or
+  `printf`, then check them with `od -c | head`). `.gitattributes` must not rewrite their line endings:
+  check `git check-attr -a`/`git ls-files --eol` and add a `samples/*.csv -text` (or `eol=crlf`) rule if needed.
 - Internals are reached through `InternalsVisibleTo("LeaseImport.Tests")`.
 
 ## JScript tests (`jscript/tests/`)
