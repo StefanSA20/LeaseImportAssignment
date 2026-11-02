@@ -22,7 +22,10 @@ Source documents: the brief (`Desktop_Developer_CaseView_Take-Home_Test_v14.docx
 ```
 LeaseImportAssignment.slnx
 LeaseImport/                 C# console app (net10.0, nullable enabled)
-  Models.cs                  Lease, Problem, ImportResult (DTOs)
+  Common/                    namespace LeaseImport.Common
+    Models.cs                Lease, Problem, ImportResult (DTOs)
+    ProblemMessages.cs       ProblemMessages (one method per code)
+    General.cs               ALL constants of the project (see below)
   CsvParser.cs               RFC 4180 tokenizer -> records with physical start line
   LeaseValidator.cs          one record -> Lease or list of Problems (value rules)
   LeaseImporter.cs           orchestration: header check, rows, duplicates, result
@@ -37,6 +40,15 @@ jscript/
   tests/run-cscript.wsf      Windows Script Host runner (cscript) for the same tests
 NOTES.md                     hand-in notes
 ```
+
+**`General` (agreed structure)**: `internal static class General` in `Common/General.cs` holds
+every constant and static readonly lookup of the project (column names, required columns,
+currency codes, problem codes, exit codes, BOM, JSON options, etc.). It has one nested
+`internal static class` per class of the project, named after it and wrapped in a
+`#region` with the same name, e.g. `#region CsvParser` / `General.CsvParser.Bom`,
+`#region LeaseValidator` / `General.LeaseValidator.RequiredColumns`, `#region ProblemMessages`
+/ `General.ProblemMessages.Codes...`, `#region Program` / `General.Program.ExitCodes...`.
+Other classes don't declare their own constants.
 
 C# classes are `internal`. Expose them to the tests with
 `[assembly: InternalsVisibleTo("LeaseImport.Tests")]`. Don't make them public just for testing.
@@ -102,8 +114,12 @@ output. It gives a non-zero exit code and a message on stderr.
 
 ## 5. C# rules (agreed, section B)
 
-- **Encoding / lines**: UTF-8 with or without BOM. CRLF or LF. Line numbers are
-  **physical** lines and the header is line 1. Skip blank lines (empty or whitespace-only), but they still count.
+- **Encoding / lines**: UTF-8 with or without BOM. Decoding is **strict**: invalid UTF-8
+  (e.g. a cp1252/ANSI file from Excel) means the input is unreadable, so exit 2 with a message on
+  stderr and no JSON. *(Agreed. The user wants to double-check this decision.)* CRLF or LF. Line numbers are
+  **physical** lines and the header is line 1. Skip blank lines (empty, or only spaces/tabs), but they still count.
+  A line with other whitespace only (e.g. a non-breaking space U+00A0) is **not** blank: it is
+  a 1-value row and gets `InvalidFieldCount` (agreed).
   A trailing newline is not a row.
 - **Quoting**: full RFC 4180: `"..."` fields, `""` escapes, commas and line breaks
   inside quotes. A record's `Line` is the line where it **starts**. No `string.Split(',')`.
@@ -127,6 +143,12 @@ output. It gives a non-zero exit code and a message on stderr.
   point, optional leading sign (`+500.00` is accepted as 500.00; `-` is parsed so negatives
   can be reported as `NegativeAmount`), no
   thousands separators, no exponent, no NaN/Infinity, at most 2 decimals, and `>= 0`.
+- **Strict number format (agreed)**: the trimmed value must match
+  `^[+-]?(0|[1-9][0-9]*)(\.[0-9]+)?$`. So `1.` (no digits after the point), `.5` (no digit
+  before it), `00012` / `01.5` (leading zeros) and `-0` / `-0.00` (zero with a minus sign) give
+  `InvalidNumber`. `0`, `0.50`, `+0` and `+500.00` are valid. A value that fails the format gets
+  only `InvalidNumber`. A well-formed value is then checked for `TooManyDecimals` and
+  `NegativeAmount` (both can apply, e.g. `-1.234`).
 - **Danish culture (agreed)**: most clients are Danish. On a da-DK machine `.` groups
   thousands and `,` is the decimal point. Parsing and JSON output must **not** depend on
   `CurrentCulture`: always pass `CultureInfo.InvariantCulture`. Danish-formatted values
@@ -149,6 +171,10 @@ output. It gives a non-zero exit code and a message on stderr.
 - CLI exit codes: 0 = JSON written (also when it contains problems), 1 = usage error,
   2 = input missing/unreadable, 3 = output can't be written.
 - Use `System.Text.Json`. No third-party CSV library.
+- **Streaming (agreed)**: the file is read and written as a stream. The parser yields records
+  lazily (`IEnumerable`). Rows are validated through the header's column index (no
+  dictionary per row). The JSON is serialized straight to the output stream (file or
+  stdout), not built as one big string. Memory must not grow with the full file text.
 
 ## 6. JScript rules
 
@@ -228,7 +254,20 @@ function calculate(leasesJson, answers)    // = calculateFields(buildInput(lease
 11. Rounding: `Math.round` isn't half away from zero, and floating point needs integer cents.
 12. Section numbering skips 5 in the brief.
 
-## 8. Working conventions
+## 8. Deferred review items (come back to these later, NOT agreed yet)
+From the first code review of the C# importer. Don't implement them without asking the user.
+- m1: the try/catch in Program covers more than I/O and catches ArgumentException. It could hide bugs.
+- m2: a failed write to stdout (closed pipe) crashes the program instead of exit 3.
+- m3: a failed file write leaves a partial file (write to `.tmp` then move).
+- m4: JSON line endings follow `Environment.NewLine` (CRLF on Windows, LF on Linux).
+- m6: a space before an opening quote (`a, "x,y"`) is strict RFC 4180: the quote isn't an
+  opener, so the field splits and the row gets `InvalidFieldCount`.
+- m7: a fatal header hides parser problems (e.g. `UnclosedQuote`) later in the file.
+- m8: the BOM is written as an invisible literal U+FEFF in the source. Use `'\uFEFF'`.
+- ProgramTests call the private `Main` by reflection. Proposal: `internal static int Run(args, stdout, stderr)`.
+- Test gaps: stdout mode (1 argument), lone CR line ending, unreadable input other than a missing file.
+
+## 9. Working conventions
 - Agents live in `.claude/agents/`: `analyze-brief`, `code-reviewer`,
   `unit-tests-generator`, `json-importer`, `jscript-generator`.
 - Keep code small and readable. Prefer clear names over comments.

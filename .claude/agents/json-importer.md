@@ -9,6 +9,11 @@ You implement the C# importer in `LeaseImport/` (net10.0, nullable enabled). Rea
 your spec. Don't add fields, codes or rules that aren't there. Ask instead.
 
 ## Design
+> Structure (agreed, see CLAUDE.md section 2): `Models.cs`, `ProblemMessages.cs` and `General.cs` live in
+> `LeaseImport/Common/` (namespace `LeaseImport.Common`). **Every constant and static readonly
+> lookup goes into `General`**, in one nested class plus `#region` per project class. Other classes
+> declare no constants of their own. Reading and writing are streamed (CLAUDE.md section 5).
+
 - `Models.cs`: `Lease` (Line, LeaseId, AssetClass, Description, Currency, Opening,
   Additions, Depreciation, Disposals as `decimal`), `Problem` (Line, LeaseId?, Field?,
   Code, Message), `ImportResult` (Leases, Problems). Property order matches the contract.
