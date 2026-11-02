@@ -1,7 +1,7 @@
 using System.Globalization;
 using LeaseImport.Common;
 
-namespace LeaseImport.Tests;
+namespace LeaseImport.Tests.Tests;
 
 /// <summary>Sets CurrentCulture and CurrentUICulture for the current thread and restores them on Dispose.</summary>
 internal sealed class CultureScope : IDisposable

@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 using LeaseImport.Common;
-using static LeaseImport.Tests.TestData;
+using static LeaseImport.Tests.Tests.TestData;
 
-namespace LeaseImport.Tests;
+namespace LeaseImport.Tests.Tests;
 
 public class LeaseImporterTests
 {

@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text.Json;
 using LeaseImport.Common;
-using static LeaseImport.Tests.TestData;
+using static LeaseImport.Tests.Tests.TestData;
 
-namespace LeaseImport.Tests;
+namespace LeaseImport.Tests.Tests;
 
 /// <summary>
 /// Most clients are Danish: on da-DK '.' groups thousands and ',' is the decimal point.

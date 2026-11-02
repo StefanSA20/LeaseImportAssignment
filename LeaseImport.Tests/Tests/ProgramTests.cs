@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 
-namespace LeaseImport.Tests;
+namespace LeaseImport.Tests.Tests;
 
 /// <summary>Light CLI tests. Main is private, so it is invoked by reflection (no production change).</summary>
 [Collection("Culture")]

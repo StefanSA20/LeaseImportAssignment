@@ -1,6 +1,6 @@
 ﻿using LeaseImport.Common;
 
-namespace LeaseImport.Tests;
+namespace LeaseImport.Tests.Tests;
 
 public class LeaseValidatorTests
 {

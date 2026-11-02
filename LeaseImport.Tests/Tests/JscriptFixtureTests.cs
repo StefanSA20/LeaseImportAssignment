@@ -1,4 +1,4 @@
-namespace LeaseImport.Tests;
+namespace LeaseImport.Tests.Tests;
 
 /// <summary>
 /// The JScript tests use JSON fixtures produced by the C# importer. These tests keep the

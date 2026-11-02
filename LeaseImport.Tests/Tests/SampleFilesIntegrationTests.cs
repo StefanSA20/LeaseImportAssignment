@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using LeaseImport.Common;
 
-namespace LeaseImport.Tests;
+namespace LeaseImport.Tests.Tests;
 
 /// <summary>
 /// Imports every samples/&lt;name&gt;.csv that has a hand-written samples/expected/&lt;name&gt;.json
