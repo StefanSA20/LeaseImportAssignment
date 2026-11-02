@@ -32,7 +32,14 @@ your spec. Don't add fields, codes or rules that aren't there. Ask instead.
   An empty value is `MissingValue`, never 0.
 - **Don't** calculate or validate the closing value. That belongs to JScript.
 - Trim fields before validating. LeaseId comparison is ordinal, case-sensitive.
-- Duplicate message exactly: `LeaseId '<id>' already appears on line <n>.`
+- Every problem code has its own message, exactly as in the CLAUDE.md section 4 table
+  (plain language + detail). Put all message templates in one `internal static class
+  ProblemMessages` (e.g. in `Models.cs` or its own file) with one method per code, so tests
+  can compare against the same text.
+- **Culture**: always pass `CultureInfo.InvariantCulture` when parsing and formatting. Never rely
+  on `CurrentCulture`. On a da-DK machine the result must be identical (Danish-formatted
+  values like `1.250.000,50` are rejected as `InvalidNumber`). Make sure `decimal`
+  serialization keeps `.` and the original scale (`1250000.50`).
 - JSON: `System.Text.Json` with PascalCase (the default property names), nulls written
   (`DefaultIgnoreCondition = Never`), indented, UTF-8 without escaping non-ASCII
   (`JavaScriptEncoder.UnsafeRelaxedJsonEscaping` or `UnicodeRanges.All`) so Danish characters stay readable.
@@ -41,4 +48,5 @@ your spec. Don't add fields, codes or rules that aren't there. Ask instead.
 ## How to work
 - Build and run against `samples/leases.csv`. Expected result: 4 leases, 0 problems.
 - Coordinate with the tests in `LeaseImport.Tests/`. Run `dotnet test` and report the real output.
-- If the .NET SDK is missing, install it (CLAUDE.md section 3) or say clearly that nothing was compiled.
+- If the .NET SDK is missing, install it with `apt-get install -y dotnet-sdk-10.0` (CLAUDE.md section 3)
+  or say clearly that nothing was compiled.

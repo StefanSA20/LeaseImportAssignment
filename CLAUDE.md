@@ -43,9 +43,9 @@ C# classes are `internal`. Expose them to the tests with
 
 ## 3. Environment
 
-- The cloud container has **Node 22**. It has **no .NET SDK** and **no cscript**.
-  Install the .NET 10 SDK before building or running C# tests (e.g. `dotnet-install.sh`).
-  If installing fails, say so. Never claim C# tests pass without running them.
+- The cloud container has **Node 22** and **no cscript**. The .NET SDK isn't preinstalled.
+  `dot.net`/`dotnet-install.sh` is blocked by the network proxy. Install it with
+  `apt-get install -y dotnet-sdk-10.0` (Ubuntu feed) instead. If installing fails, say so. Never claim C# tests pass without running them.
 - Build/test: `dotnet test LeaseImportAssignment.slnx`
 - JScript tests: `node jscript/tests/run-node.js`. On Windows also
   `cscript //nologo jscript/tests/run-cscript.wsf`.
@@ -60,7 +60,7 @@ C# classes are `internal`. Expose them to the tests with
   ],
   "Problems": [
     { "Line": 5, "LeaseId": "L-2001", "Field": "LeaseId", "Code": "DuplicateLeaseId",
-      "Message": "LeaseId 'L-2001' already appears on line 2." }
+      "Message": "This lease can't be processed because its ID 'L-2001' is not unique (it already appears on line 2)." }
   ]
 }
 ```
@@ -74,21 +74,27 @@ C# classes are `internal`. Expose them to the tests with
   never appears in `Leases`.
 - **No extra fields** beyond this contract, in either the C# JSON or the JScript result.
 
-### Problem codes (use exactly these)
+### Problem codes and messages (use exactly these)
 
-| Code | When |
-|---|---|
-| `EmptyFile` | No header line at all (Line 1, Field null) |
-| `MissingColumn` | Required header column missing (Line 1, Field = column name) |
-| `DuplicateColumn` | Header column appears twice (Line 1, Field = column name) |
-| `UnclosedQuote` | Quoted field never closed (Line = record start line) |
-| `InvalidFieldCount` | Row field count ≠ header field count (Field null) |
-| `MissingValue` | Required field empty after trimming |
-| `InvalidNumber` | Not a valid invariant-culture decimal |
-| `TooManyDecimals` | More than 2 decimal places |
-| `NegativeAmount` | Opening/Additions/Depreciation/Disposals < 0 |
-| `InvalidCurrency` | Not an active ISO-4217 code (exact uppercase) |
-| `DuplicateLeaseId` | LeaseId already seen on an earlier line |
+Every rule has its own message: plain language for a business user, plus the concrete
+detail. Placeholders: `{field}` = column name, `{value}` = the trimmed raw value,
+`{id}` = LeaseId, `{line}` = a line number, `{expected}`/`{actual}` = field counts.
+Messages are built in one place (e.g. a `ProblemMessages` static class) so that tests
+and code share the same text.
+
+| Code | When | Message |
+|---|---|---|
+| `EmptyFile` | No header line at all (Line 1, Field null) | `The file can't be processed because it is empty (no header line was found).` |
+| `MissingColumn` | Required header column missing (Line 1, Field = column name) | `The file can't be processed because the required column '{field}' is missing from the header.` |
+| `DuplicateColumn` | Header column appears twice (Line 1, Field = column name) | `The file can't be processed because the column '{field}' appears more than once in the header.` |
+| `UnclosedQuote` | Quoted field never closed (Line = record start line, Field null) | `This lease can't be processed because a quoted value starting on line {line} is never closed.` |
+| `InvalidFieldCount` | Row field count ≠ header field count (Field null) | `This lease can't be processed because it has {actual} values, but the header has {expected} columns.` |
+| `MissingValue` | Required field empty after trimming | `This lease can't be processed because '{field}' is empty.` |
+| `InvalidNumber` | Not a valid invariant-culture decimal | `This lease can't be processed because '{field}' has the value '{value}', which is not a valid amount. Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50.` |
+| `TooManyDecimals` | More than 2 decimal places | `This lease can't be processed because '{field}' has the value '{value}', which has more than 2 decimals.` |
+| `NegativeAmount` | Opening/Additions/Depreciation/Disposals < 0 | `This lease can't be processed because '{field}' has the value '{value}', which is negative. Amounts must be 0 or more.` |
+| `InvalidCurrency` | Not an active ISO-4217 code (exact uppercase) | `This lease can't be processed because '{value}' is not a valid ISO-4217 currency code (use three uppercase letters, e.g. DKK).` |
+| `DuplicateLeaseId` | LeaseId already seen on an earlier line | `This lease can't be processed because its ID '{id}' is not unique (it already appears on line {line}).` |
 
 If a required column is missing or duplicated, the import is fatal: report the header
 problems and accept **no** leases. A missing or unreadable input file is not JSON
@@ -105,7 +111,7 @@ output. It gives a non-zero exit code and a message on stderr.
   Required: `LeaseId, AssetClass, Description, Currency, Opening, Additions, Depreciation, Disposals`.
 - **Trimming**: trim every field value before validating it.
 - **LeaseId**: required. Duplicates: the **first occurrence is kept**, later ones are rejected
-  with `DuplicateLeaseId` and message `LeaseId '<id>' already appears on line <n>.`
+  with `DuplicateLeaseId` (message in section 4; `{line}` = the first occurrence's line).
   Compare after trimming, case-sensitive. An id counts as seen even when its first row
   was rejected for another reason.
 - **AssetClass**: required. No fixed list of values.
@@ -117,6 +123,14 @@ output. It gives a non-zero exit code and a message on stderr.
   `MissingValue`, never 0). `decimal` parsed with the invariant culture: `.` as the decimal
   point, optional leading `-` (so negatives can be reported as `NegativeAmount`), no
   thousands separators, no exponent, no NaN/Infinity, at most 2 decimals, and `>= 0`.
+- **Danish culture (agreed)**: most clients are Danish. On a da-DK machine `.` groups
+  thousands and `,` is the decimal point. Parsing and JSON output must **not** depend on
+  `CurrentCulture`: always pass `CultureInfo.InvariantCulture`. Danish-formatted values
+  (`1.250.000,50`, `125,50`, `1.250`) are **rejected** as `InvalidNumber`, not accepted.
+  There must be tests that run with `CultureInfo.CurrentCulture`/`CurrentUICulture` set to
+  `new CultureInfo("da-DK")` (restored afterwards) to prove that `1250000.50` still
+  parses to 1250000.50, Danish-formatted values are rejected, and the JSON output keeps `.`
+  as the decimal point (e.g. `1250000.50`, never `1250000,50`).
 - **No closing value in C#.** C# doesn't calculate or check the closing value
   (including a negative closing). That belongs to the JScript part and its tests.
 - **Report every problem in a row**, one Problem per field/rule. Don't stop at the first.

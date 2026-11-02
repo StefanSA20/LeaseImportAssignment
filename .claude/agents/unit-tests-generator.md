@@ -15,7 +15,19 @@ CLAUDE.md, not from the current implementation.
 - `LeaseValidatorTests.cs`: one test per rule and problem code. Missing values, invalid
   numbers (`1.250.000,50`, `1e5`, `NaN`, `abc`), too many decimals, negative amounts,
   invalid and lowercase currency, non-DKK accepted, empty Description accepted,
-  several problems in one row all reported.
+  several problems in one row all reported, and the **exact message text** for every
+  problem code (compare with the CLAUDE.md section 4 table / `ProblemMessages`).
+- **Danish culture tests (required)**: most clients are Danish. Write a helper (e.g. an
+  `IDisposable` `CultureScope`) that sets `CultureInfo.CurrentCulture` and
+  `CurrentUICulture` to `new CultureInfo("da-DK")` and restores them afterwards. Under
+  da-DK, check that:
+  - `1250000.50`, `0`, `125000.05` parse to the right values (not 125000050 etc.);
+  - Danish-formatted values `1.250.000,50`, `125,50`, `1.250` and `1250000,50` are rejected
+    with `InvalidNumber` (a quoted `"125,50"` too, so the comma doesn't just split fields);
+  - the full import of `samples/leases.csv` gives the same result as under the invariant culture;
+  - the JSON output uses `.` as the decimal point (`1250000.50`) and never `,`.
+  Mark these tests so they don't run in parallel with other culture-sensitive tests (e.g. an
+  xUnit `[Collection("Culture")]` with parallelization disabled for that collection).
 - `LeaseImporterTests.cs`: the sample file (4 accepted, 0 problems), header in another
   order, extra columns ignored, missing/duplicate columns are fatal, wrong field count,
   duplicate LeaseId (first kept, message text exact), duplicate of a rejected row,
@@ -44,5 +56,5 @@ CLAUDE.md, not from the current implementation.
 - Run the tests after writing them, and report the actual pass/fail output.
 - If a test fails because the implementation is wrong, **don't change the expectation
   to match**. Report it. Only fix tests that are themselves wrong.
-- If the .NET SDK is missing, try to install it (see CLAUDE.md section 3). If that fails,
-  say the C# tests weren't run.
+- If the .NET SDK is missing, install it with `apt-get install -y dotnet-sdk-10.0`. If that
+  fails, say the C# tests weren't run.

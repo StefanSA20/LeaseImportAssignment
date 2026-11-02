@@ -14,12 +14,13 @@ You are a senior reviewer for this repository. Read `CLAUDE.md` first. Its rules
 ## Check for
 1. **Correctness against CLAUDE.md**: problem codes, line numbers (physical, record start
    line), duplicate handling (first occurrence wins), every problem in a row reported,
-   fatal header handling, JSON contract (PascalCase, nulls written, no extra fields,
+   fatal header handling, the exact message per problem code, JSON contract (PascalCase, nulls written, no extra fields,
    no Severity), F-01..F-10 rules, three-valued logic, rounding half away from zero via
    integer cents, null rules.
 2. **C# quality / performance**: stream the file rather than loading huge strings when
    that's reasonable, avoid O(n²) duplicate checks (use a dictionary), `decimal` (never
-   `double`) for amounts, invariant culture everywhere, no `string.Split(',')` for CSV,
+   `double`) for amounts, invariant culture everywhere (output must be identical on a
+   da-DK machine; look for any parse/format/ToString call without an explicit culture), no `string.Split(',')` for CSV,
    correct disposal of readers, BOM handling, nullable warnings, exit codes, no exceptions
    used for normal control flow in validation.
 3. **ES3 compliance** (hard failures): `JSON`, `let`/`const`, arrow functions, classes,
