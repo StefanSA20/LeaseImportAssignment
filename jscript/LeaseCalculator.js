@@ -63,7 +63,7 @@ function calculateFields(input) {
         AverageClosing: centsToAmount(averageCents),
         ShowRouDisclosure: and3(hasLeases, isIfrs),
         ShowMaturityAnalysis: and3(hasLeases, or3(isIfrs, isLarge)),
-        ShowSubleaseDisclosure: and3(hasSubleases, hasLeases),
+        ShowSubleaseDisclosure: subleaseDisclosure(hasSubleases, hasLeases),
         ShowCashOutflow: null
     };
 }
@@ -100,6 +100,15 @@ function subleaseAnswer(answer) {
         return answer;
     }
     return null;
+}
+
+// F-09: HasSubleases = "Yes" without any lease contradicts the data, so it can't be calculated.
+// Otherwise the three-valued AND applies.
+function subleaseDisclosure(hasSubleases, hasLeases) {
+    if (hasSubleases === YES && hasLeases === NO) {
+        return null;
+    }
+    return and3(hasSubleases, hasLeases);
 }
 
 // Three-valued AND: "No" wins, then unknown (null), then "Yes".
