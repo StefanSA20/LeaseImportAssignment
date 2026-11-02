@@ -1,10 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Runtime.CompilerServices;
 
-namespace LeaseImport
-{
-    internal class Models
-    {
-    }
-}
+[assembly: InternalsVisibleTo("LeaseImport.Tests")]
+
+namespace LeaseImport;
+
+internal sealed record Lease(
+    int Line,
+    string LeaseId,
+    string AssetClass,
+    string Description,
+    string Currency,
+    decimal Opening,
+    decimal Additions,
+    decimal Depreciation,
+    decimal Disposals);
+
+internal sealed record Problem(
+    int Line,
+    string? LeaseId,
+    string? Field,
+    string Code,
+    string Message);
+
+internal sealed record ImportResult(
+    IReadOnlyList<Lease> Leases,
+    IReadOnlyList<Problem> Problems);
