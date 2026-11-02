@@ -47,17 +47,35 @@ jscript/
 NOTES.md                     hand-in notes
 ```
 
-**`General` (agreed structure)**: `internal static class General` in `Common/General.cs` holds
+**`General` (agreed structure)**: `public static class General` in `Common/General.cs` holds
 every constant and static readonly lookup of the project (column names, required columns,
 currency codes, problem codes, exit codes, BOM, JSON options, etc.). It has one nested
-`internal static class` per class of the project, named after it and wrapped in a
+`public static class` per class of the project, named after it and wrapped in a
 `#region` with the same name, e.g. `#region CsvParser` / `General.CsvParser.Bom`,
 `#region LeaseValidator` / `General.LeaseValidator.RequiredColumns`, `#region ProblemMessages`
 / `General.ProblemMessages.Codes...`, `#region Program` / `General.Program.ExitCodes...`.
-Other classes don't declare their own constants.
+Other classes don't declare their own constants. Constants are `public const`; dictionaries,
+sets, regexes, encodings and JSON options are `public static readonly`.
 
-C# classes are `internal`. Expose them to the tests with
-`[assembly: InternalsVisibleTo("LeaseImport.Tests")]`. Don't make them public just for testing.
+**Visibility and models (agreed)**: all types in the LeaseImport project are `public` (it's a
+console app and only the tests reference it). There is **no** `InternalsVisibleTo`. Helper
+methods inside the classes stay `private`. Never make a private method public only to test it.
+Models are plain classes, **not records**, with `{ get; set; }` properties and object
+initializers (no positional constructors), e.g.:
+```csharp
+public class Lease
+{
+    public int Line { get; set; }
+    public string LeaseId { get; set; } = string.Empty;
+    ...
+    public decimal Opening { get; set; }
+}
+```
+- Non-nullable strings default to `string.Empty`.
+- Properties that may be null in the JSON contract (`Problem.LeaseId`, `Problem.Field`) are
+  `string?` with no default, so they're written as `null`.
+- Collections (e.g. `ImportResult.Leases`/`Problems`) are initialised to empty lists.
+- Classes have no value equality, so tests compare properties, not whole objects.
 
 ## 3. Environment
 
@@ -280,7 +298,7 @@ From the first code review of the C# importer. Don't implement them without aski
 - m6: a space before an opening quote (`a, "x,y"`) is strict RFC 4180: the quote isn't an
   opener, so the field splits and the row gets `InvalidFieldCount`.
 - m7: a fatal header hides parser problems (e.g. `UnclosedQuote`) later in the file.
-- ProgramTests call the private `Main` by reflection. Proposal: `internal static int Run(args, stdout, stderr)`.
+- ProgramTests call the private `Main` by reflection. Proposal: a `Run(args, stdout, stderr)` entry point (note: it may not be made public only for testing; needs a decision).
 - Test gaps: stdout mode (1 argument), lone CR line ending, unreadable input other than a missing file.
 
 ## 9. Test data (agreed)

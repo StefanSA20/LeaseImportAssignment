@@ -42,7 +42,9 @@ CLAUDE.md, not from the current implementation.
   with CRLF, some with a BOM and some without, and write them byte-exact (e.g. with Python or
   `printf`, then check them with `od -c | head`). `.gitattributes` must not rewrite their line endings:
   check `git check-attr -a`/`git ls-files --eol` and add a `samples/*.csv -text` (or `eol=crlf`) rule if needed.
-- Internals are reached through `InternalsVisibleTo("LeaseImport.Tests")`.
+- Production types are `public` (no `InternalsVisibleTo`). Models are classes without value
+  equality, so compare their properties (or a helper that does), never whole objects with `Assert.Equal`.
+  Don't make private methods public to test them.
 
 ## JScript tests (`jscript/tests/`)
 - Write the test framework and the tests in **strict ES3** (same rules as CLAUDE.md section 6),

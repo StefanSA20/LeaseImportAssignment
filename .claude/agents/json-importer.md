@@ -29,7 +29,8 @@ your spec. Don't add fields, codes or rules that aren't there. Ask instead.
   its row was rejected), builds `ImportResult`, serializes it.
 - `Program.cs`: `LeaseImport <input.csv> [output.json]`. Writes to stdout if there's no
   output path. A missing or unreadable file gives a message on stderr and a non-zero exit code.
-- Add `[assembly: InternalsVisibleTo("LeaseImport.Tests")]`. Keep the classes `internal`.
+- All types are `public` and there's no `InternalsVisibleTo`. Models are plain classes with
+  `{ get; set; }` properties and object initializers, not records (CLAUDE.md section 2). Helper methods stay `private`.
 
 ## Rules that are easy to get wrong
 - Parse amounts with `decimal.TryParse(s, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, ...)`.
@@ -38,7 +39,7 @@ your spec. Don't add fields, codes or rules that aren't there. Ask instead.
 - **Don't** calculate or validate the closing value. That belongs to JScript.
 - Trim fields before validating. LeaseId comparison is ordinal, case-sensitive.
 - Every problem code has its own message, exactly as in the CLAUDE.md section 4 table
-  (plain language + detail). Put all message templates in one `internal static class
+  (plain language + detail). Put all message templates in one `public static class
   ProblemMessages` (e.g. in `Models.cs` or its own file) with one method per code, so tests
   can compare against the same text.
 - **Culture**: always pass `CultureInfo.InvariantCulture` when parsing and formatting. Never rely
