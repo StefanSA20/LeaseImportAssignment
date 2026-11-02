@@ -10,11 +10,11 @@ namespace LeaseImport.Common;
 /// <summary>
 /// Every constant and static readonly lookup of the project, grouped by the class that uses it.
 /// </summary>
-internal static class General
+public static class General
 {
     #region CsvParser
 
-    internal static class CsvParser
+    public static class CsvParser
     {
         public const char Quote = '"';
         public const char Separator = ',';
@@ -25,7 +25,7 @@ internal static class General
 
     #region LeaseValidator
 
-    internal static class LeaseValidator
+    public static class LeaseValidator
     {
         public const string LeaseIdColumn = "LeaseId";
         public const string AssetClassColumn = "AssetClass";
@@ -73,7 +73,7 @@ internal static class General
 
     #region LeaseImporter
 
-    internal static class LeaseImporter
+    public static class LeaseImporter
     {
         public const int HeaderLine = 1;
 
@@ -89,7 +89,7 @@ internal static class General
 
     #region ProblemMessages
 
-    internal static class ProblemMessages
+    public static class ProblemMessages
     {
         public const string EmptyFile = "EmptyFile";
         public const string MissingColumn = "MissingColumn";
@@ -108,7 +108,7 @@ internal static class General
 
     #region Program
 
-    internal static class Program
+    public static class Program
     {
         public const int Success = 0;
         public const int UsageError = 1;

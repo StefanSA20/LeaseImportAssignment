@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using LeaseImport.Common;
+using static LeaseImport.Tests.Tests.ModelAssert;
 using static LeaseImport.Tests.Tests.TestData;
 
 namespace LeaseImport.Tests.Tests;
@@ -72,9 +73,9 @@ public class DanishCultureTests
         var result = Import(Csv(Header, $"L-1,Property,Office,DKK,\"{text}\",0,0,0"));
 
         Assert.Empty(result.Leases);
-        Assert.Equal(new Problem(2, "L-1", "Opening", "InvalidNumber",
-            $"This lease can't be processed because 'Opening' has the value '{text}', which is not a valid amount. " +
-            "Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50."),
+        AssertProblem(new Problem { Line = 2, LeaseId = "L-1", Field = "Opening", Code = "InvalidNumber",
+            Message = $"This lease can't be processed because 'Opening' has the value '{text}', which is not a valid amount. " +
+            "Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50." },
             Assert.Single(result.Problems));
     }
 
@@ -86,8 +87,8 @@ public class DanishCultureTests
         var result = Import(Csv(Header, "L-1,Property,Office,DKK,1.250,0,0,0"));
 
         Assert.Empty(result.Leases);
-        Assert.Equal(new Problem(2, "L-1", "Opening", "TooManyDecimals",
-            "This lease can't be processed because 'Opening' has the value '1.250', which has more than 2 decimals."),
+        AssertProblem(new Problem { Line = 2, LeaseId = "L-1", Field = "Opening", Code = "TooManyDecimals",
+            Message = "This lease can't be processed because 'Opening' has the value '1.250', which has more than 2 decimals." },
             Assert.Single(result.Problems));
     }
 
@@ -112,8 +113,8 @@ public class DanishCultureTests
 
         Assert.Equal(4, danish.Leases.Count);
         Assert.Empty(danish.Problems);
-        Assert.Equal(invariant.Leases, danish.Leases);
-        Assert.Equal(invariant.Problems, danish.Problems);
+        AssertLeases(invariant.Leases, danish.Leases);
+        AssertProblems(invariant.Problems, danish.Problems);
         Assert.Equal(invariantJson, danishJson);
     }
 
@@ -197,11 +198,11 @@ public class DanishCultureTests
 
         Assert.Empty(result.Leases);
         Assert.Equal(2, result.Problems.Count);
-        Assert.Contains(new Problem(2, "L-1", "Opening", "TooManyDecimals",
-            "This lease can't be processed because 'Opening' has the value '-1.234', which has more than 2 decimals."),
+        AssertContainsProblem(new Problem { Line = 2, LeaseId = "L-1", Field = "Opening", Code = "TooManyDecimals",
+            Message = "This lease can't be processed because 'Opening' has the value '-1.234', which has more than 2 decimals." },
             result.Problems);
-        Assert.Contains(new Problem(2, "L-1", "Opening", "NegativeAmount",
-            "This lease can't be processed because 'Opening' has the value '-1.234', which is negative. Amounts must be 0 or more."),
+        AssertContainsProblem(new Problem { Line = 2, LeaseId = "L-1", Field = "Opening", Code = "NegativeAmount",
+            Message = "This lease can't be processed because 'Opening' has the value '-1.234', which is negative. Amounts must be 0 or more." },
             result.Problems);
     }
 

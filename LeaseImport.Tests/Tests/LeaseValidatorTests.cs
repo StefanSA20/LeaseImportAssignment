@@ -1,4 +1,5 @@
 ﻿using LeaseImport.Common;
+using static LeaseImport.Tests.Tests.ModelAssert;
 
 namespace LeaseImport.Tests.Tests;
 
@@ -55,7 +56,7 @@ public class LeaseValidatorTests
         Assert.Empty(result.Problems);
         Assert.Equal("L-2001", result.LeaseId);
         var lease = Assert.IsType<Lease>(result.Lease);
-        Assert.Equal(new Lease(2, "L-2001", "Property", "Office Aarhus", "DKK", 1250000.50m, 0m, 125000.05m, 0m), lease);
+        AssertLease(new Lease { Line = 2, LeaseId = "L-2001", AssetClass = "Property", Description = "Office Aarhus", Currency = "DKK", Opening = 1250000.50m, Additions = 0m, Depreciation = 125000.05m, Disposals = 0m }, lease);
     }
 
     [Theory]
@@ -232,9 +233,9 @@ public class LeaseValidatorTests
         {
             var problem = SingleProblem(Validate((column, text)));
 
-            Assert.Equal(new Problem(Line, "L-1", column, "InvalidNumber",
-                $"This lease can't be processed because '{column}' has the value '{text}', which is not a valid amount. " +
-                "Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50."),
+            AssertProblem(new Problem { Line = Line, LeaseId = "L-1", Field = column, Code = "InvalidNumber",
+                Message = $"This lease can't be processed because '{column}' has the value '{text}', which is not a valid amount. " +
+                "Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50." },
                 problem);
         }
     }
@@ -272,11 +273,11 @@ public class LeaseValidatorTests
 
             Assert.Null(result.Lease);
             Assert.Equal(2, result.Problems.Count);
-            Assert.Contains(new Problem(Line, "L-1", column, "TooManyDecimals",
-                $"This lease can't be processed because '{column}' has the value '-1.234', which has more than 2 decimals."),
+            AssertContainsProblem(new Problem { Line = Line, LeaseId = "L-1", Field = column, Code = "TooManyDecimals",
+                Message = $"This lease can't be processed because '{column}' has the value '-1.234', which has more than 2 decimals." },
                 result.Problems);
-            Assert.Contains(new Problem(Line, "L-1", column, "NegativeAmount",
-                $"This lease can't be processed because '{column}' has the value '-1.234', which is negative. Amounts must be 0 or more."),
+            AssertContainsProblem(new Problem { Line = Line, LeaseId = "L-1", Field = column, Code = "NegativeAmount",
+                Message = $"This lease can't be processed because '{column}' has the value '-1.234', which is negative. Amounts must be 0 or more." },
                 result.Problems);
         }
     }

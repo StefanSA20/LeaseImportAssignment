@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using LeaseImport.Common;
+using static LeaseImport.Tests.Tests.ModelAssert;
 using static LeaseImport.Tests.Tests.TestData;
 
 namespace LeaseImport.Tests.Tests;
@@ -20,13 +21,13 @@ public class LeaseImporterTests
         var result = ImportSample();
 
         Assert.Empty(result.Problems);
-        Assert.Equal(
+        AssertLeases(
             new[]
             {
-                new Lease(2, "L-2001", "Property", "Office Aarhus", "DKK", 1250000.50m, 0m, 125000.05m, 0m),
-                new Lease(3, "L-2002", "Vehicles", "Fleet (12 cars)", "DKK", 480000.00m, 60000.00m, 96000.00m, 0m),
-                new Lease(4, "L-2003", "Equipment", "Printer", "DKK", 20000.00m, 0m, 5000.00m, 0m),
-                new Lease(5, "L-2004", "Property", "Warehouse Odense", "EUR", 300000.00m, 0m, 30000.00m, 0m),
+                new Lease { Line = 2, LeaseId = "L-2001", AssetClass = "Property", Description = "Office Aarhus", Currency = "DKK", Opening = 1250000.50m, Additions = 0m, Depreciation = 125000.05m, Disposals = 0m },
+                new Lease { Line = 3, LeaseId = "L-2002", AssetClass = "Vehicles", Description = "Fleet (12 cars)", Currency = "DKK", Opening = 480000.00m, Additions = 60000.00m, Depreciation = 96000.00m, Disposals = 0m },
+                new Lease { Line = 4, LeaseId = "L-2003", AssetClass = "Equipment", Description = "Printer", Currency = "DKK", Opening = 20000.00m, Additions = 0m, Depreciation = 5000.00m, Disposals = 0m },
+                new Lease { Line = 5, LeaseId = "L-2004", AssetClass = "Property", Description = "Warehouse Odense", Currency = "EUR", Opening = 300000.00m, Additions = 0m, Depreciation = 30000.00m, Disposals = 0m },
             },
             result.Leases);
     }
@@ -57,7 +58,7 @@ public class LeaseImporterTests
             "0,10.00,5.00,100.00,EUR,Office,Property,L-1"));
 
         Assert.Empty(result.Problems);
-        Assert.Equal(new Lease(2, "L-1", "Property", "Office", "EUR", 100.00m, 5.00m, 10.00m, 0m), Assert.Single(result.Leases));
+        AssertLease(new Lease { Line = 2, LeaseId = "L-1", AssetClass = "Property", Description = "Office", Currency = "EUR", Opening = 100.00m, Additions = 5.00m, Depreciation = 10.00m, Disposals = 0m }, Assert.Single(result.Leases));
     }
 
     [Fact]
@@ -79,7 +80,7 @@ public class LeaseImporterTests
             "whatever,L-1,Property,Office,DKK,100.00,0,10.00,0,more,Bob"));
 
         Assert.Empty(result.Problems);
-        Assert.Equal(new Lease(2, "L-1", "Property", "Office", "DKK", 100.00m, 0m, 10.00m, 0m), Assert.Single(result.Leases));
+        AssertLease(new Lease { Line = 2, LeaseId = "L-1", AssetClass = "Property", Description = "Office", Currency = "DKK", Opening = 100.00m, Additions = 0m, Depreciation = 10.00m, Disposals = 0m }, Assert.Single(result.Leases));
     }
 
     [Theory]
@@ -100,8 +101,8 @@ public class LeaseImporterTests
 
         Assert.Empty(result.Leases);
         var problem = Assert.Single(result.Problems);
-        Assert.Equal(new Problem(1, null, missing, "MissingColumn",
-            $"The file can't be processed because the required column '{missing}' is missing from the header."), problem);
+        AssertProblem(new Problem { Line = 1, LeaseId = null, Field = missing, Code = "MissingColumn",
+            Message = $"The file can't be processed because the required column '{missing}' is missing from the header." }, problem);
     }
 
     [Fact]
@@ -124,8 +125,8 @@ public class LeaseImporterTests
 
         Assert.Empty(result.Leases);
         var problem = Assert.Single(result.Problems);
-        Assert.Equal(new Problem(1, null, "Opening", "DuplicateColumn",
-            "The file can't be processed because the column 'Opening' appears more than once in the header."), problem);
+        AssertProblem(new Problem { Line = 1, LeaseId = null, Field = "Opening", Code = "DuplicateColumn",
+            Message = "The file can't be processed because the column 'Opening' appears more than once in the header." }, problem);
     }
 
     [Fact]
@@ -155,8 +156,8 @@ public class LeaseImporterTests
         var result = Import(csv);
 
         Assert.Empty(result.Leases);
-        Assert.Equal(new Problem(1, null, null, "EmptyFile",
-            "The file can't be processed because it is empty (no header line was found)."), Assert.Single(result.Problems));
+        AssertProblem(new Problem { Line = 1, LeaseId = null, Field = null, Code = "EmptyFile",
+            Message = "The file can't be processed because it is empty (no header line was found)." }, Assert.Single(result.Problems));
     }
 
     [Theory]
@@ -208,8 +209,8 @@ public class LeaseImporterTests
         var result = Import(Csv(Header, Row1, row, Row2));
 
         Assert.Equal(["L-1", "L-2"], result.Leases.Select(l => l.LeaseId));
-        Assert.Equal(new Problem(3, null, null, "InvalidFieldCount",
-            $"This lease can't be processed because it has {actual} values, but the header has 8 columns."),
+        AssertProblem(new Problem { Line = 3, LeaseId = null, Field = null, Code = "InvalidFieldCount",
+            Message = $"This lease can't be processed because it has {actual} values, but the header has 8 columns." },
             Assert.Single(result.Problems));
     }
 
@@ -230,8 +231,8 @@ public class LeaseImporterTests
         var result = Import(Csv(Header, Row1, "L-X,Property,Office,dkk,100.00,0,10.00,0", Row2));
 
         Assert.Equal(["L-1", "L-2"], result.Leases.Select(l => l.LeaseId));
-        Assert.Equal(new Problem(3, "L-X", "Currency", "InvalidCurrency",
-            "This lease can't be processed because 'dkk' is not a valid ISO-4217 currency code (use three uppercase letters, e.g. DKK)."),
+        AssertProblem(new Problem { Line = 3, LeaseId = "L-X", Field = "Currency", Code = "InvalidCurrency",
+            Message = "This lease can't be processed because 'dkk' is not a valid ISO-4217 currency code (use three uppercase letters, e.g. DKK)." },
             Assert.Single(result.Problems));
     }
 
@@ -250,8 +251,8 @@ public class LeaseImporterTests
         var result = Import(Csv(Header, Row1, "", "L-2,Property,\"Office,DKK,100.00,0,10.00,0", Row2));
 
         Assert.Equal(["L-1"], result.Leases.Select(l => l.LeaseId));
-        Assert.Equal(new Problem(4, null, null, "UnclosedQuote",
-            "This lease can't be processed because a quoted value starting on line 4 is never closed."),
+        AssertProblem(new Problem { Line = 4, LeaseId = null, Field = null, Code = "UnclosedQuote",
+            Message = "This lease can't be processed because a quoted value starting on line 4 is never closed." },
             Assert.Single(result.Problems));
     }
 
@@ -261,8 +262,8 @@ public class LeaseImporterTests
         var result = Import(Csv("LeaseId,\"AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals", Row1));
 
         Assert.Empty(result.Leases);
-        Assert.Equal(new Problem(1, null, null, "UnclosedQuote",
-            "This lease can't be processed because a quoted value starting on line 1 is never closed."),
+        AssertProblem(new Problem { Line = 1, LeaseId = null, Field = null, Code = "UnclosedQuote",
+            Message = "This lease can't be processed because a quoted value starting on line 1 is never closed." },
             Assert.Single(result.Problems));
     }
 
@@ -281,13 +282,13 @@ public class LeaseImporterTests
 
         Assert.Equal(["L-2001", "L-1"], result.Leases.Select(l => l.LeaseId));
         Assert.Equal("Office Aarhus", result.Leases[0].Description);
-        Assert.Equal(
+        AssertProblems(
             new[]
             {
-                new Problem(5, "L-2001", "LeaseId", "DuplicateLeaseId",
-                    "This lease can't be processed because its ID 'L-2001' is not unique (it already appears on line 2)."),
-                new Problem(6, "L-2001", "LeaseId", "DuplicateLeaseId",
-                    "This lease can't be processed because its ID 'L-2001' is not unique (it already appears on line 2)."),
+                new Problem { Line = 5, LeaseId = "L-2001", Field = "LeaseId", Code = "DuplicateLeaseId",
+                    Message = "This lease can't be processed because its ID 'L-2001' is not unique (it already appears on line 2)." },
+                new Problem { Line = 6, LeaseId = "L-2001", Field = "LeaseId", Code = "DuplicateLeaseId",
+                    Message = "This lease can't be processed because its ID 'L-2001' is not unique (it already appears on line 2)." },
             },
             result.Problems);
     }
@@ -319,8 +320,8 @@ public class LeaseImporterTests
         Assert.Empty(result.Leases);
         Assert.Equal(2, result.Problems.Count);
         Assert.Equal("InvalidCurrency", result.Problems[0].Code);
-        Assert.Equal(new Problem(3, "L-1", "LeaseId", "DuplicateLeaseId",
-            "This lease can't be processed because its ID 'L-1' is not unique (it already appears on line 2)."),
+        AssertProblem(new Problem { Line = 3, LeaseId = "L-1", Field = "LeaseId", Code = "DuplicateLeaseId",
+            Message = "This lease can't be processed because its ID 'L-1' is not unique (it already appears on line 2)." },
             result.Problems[1]);
     }
 
@@ -350,7 +351,7 @@ public class LeaseImporterTests
             "L-1,Property,A,DKK,1,0,0",
             "L-1,Property,B,DKK,1,0,0,0"));
 
-        Assert.Equal(new Lease(3, "L-1", "Property", "B", "DKK", 1m, 0m, 0m, 0m), Assert.Single(result.Leases));
+        AssertLease(new Lease { Line = 3, LeaseId = "L-1", AssetClass = "Property", Description = "B", Currency = "DKK", Opening = 1m, Additions = 0m, Depreciation = 0m, Disposals = 0m }, Assert.Single(result.Leases));
         Assert.Equal("InvalidFieldCount", Assert.Single(result.Problems).Code);
     }
 
@@ -440,8 +441,8 @@ public class LeaseImporterTests
         var result = Import(csv);
 
         Assert.Equal(new[] { 2, 6 }, result.Leases.Select(l => l.Line).ToArray());
-        Assert.Equal(new Problem(4, null, null, "InvalidFieldCount",
-            "This lease can't be processed because it has 1 values, but the header has 8 columns."),
+        AssertProblem(new Problem { Line = 4, LeaseId = null, Field = null, Code = "InvalidFieldCount",
+            Message = "This lease can't be processed because it has 1 values, but the header has 8 columns." },
             Assert.Single(result.Problems));
     }
 
@@ -450,8 +451,8 @@ public class LeaseImporterTests
     {
         var result = Import(Csv(Header, " \u00A0 ", Row1));
 
-        Assert.Equal(new Problem(2, null, null, "InvalidFieldCount",
-            "This lease can't be processed because it has 1 values, but the header has 8 columns."),
+        AssertProblem(new Problem { Line = 2, LeaseId = null, Field = null, Code = "InvalidFieldCount",
+            Message = "This lease can't be processed because it has 1 values, but the header has 8 columns." },
             Assert.Single(result.Problems));
         Assert.Equal(3, Assert.Single(result.Leases).Line);
     }

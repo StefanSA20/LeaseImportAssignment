@@ -9,7 +9,7 @@ namespace LeaseImport;
 /// Orchestrates one import: header check, field counts, value validation, duplicate LeaseIds.
 /// The input is read record by record; only the result (leases and problems) is kept in memory.
 /// </summary>
-internal static class LeaseImporter
+public static class LeaseImporter
 {
     public static ImportResult Import(TextReader reader)
     {
@@ -23,10 +23,17 @@ internal static class LeaseImporter
         {
             if (parserProblems.Count == 0)
             {
-                problems.Add(new Problem(HeaderLine, null, null, General.ProblemMessages.EmptyFile, ProblemMessages.EmptyFile()));
+                problems.Add(new Problem
+                {
+                    Line = HeaderLine,
+                    LeaseId = null,
+                    Field = null,
+                    Code = General.ProblemMessages.EmptyFile,
+                    Message = ProblemMessages.EmptyFile(),
+                });
             }
             problems.AddRange(parserProblems);
-            return new ImportResult(leases, problems);
+            return new ImportResult { Leases = leases, Problems = problems };
         }
 
         var header = records.Current.Fields;
@@ -34,7 +41,7 @@ internal static class LeaseImporter
         if (headerProblems.Count > 0)
         {
             ReadToEnd(records);
-            return new ImportResult(leases, headerProblems);
+            return new ImportResult { Leases = leases, Problems = headerProblems };
         }
 
         var columnIndex = BuildColumnIndex(header);
@@ -45,8 +52,14 @@ internal static class LeaseImporter
             var record = records.Current;
             if (record.Fields.Count != header.Count)
             {
-                problems.Add(new Problem(record.StartLine, null, null, General.ProblemMessages.InvalidFieldCount,
-                    ProblemMessages.InvalidFieldCount(record.Fields.Count, header.Count)));
+                problems.Add(new Problem
+                {
+                    Line = record.StartLine,
+                    LeaseId = null,
+                    Field = null,
+                    Code = General.ProblemMessages.InvalidFieldCount,
+                    Message = ProblemMessages.InvalidFieldCount(record.Fields.Count, header.Count),
+                });
                 continue;
             }
 
@@ -57,8 +70,14 @@ internal static class LeaseImporter
             {
                 if (firstLineById.TryGetValue(id, out var firstLine))
                 {
-                    duplicate = new Problem(record.StartLine, id, LeaseIdColumn,
-                        General.ProblemMessages.DuplicateLeaseId, ProblemMessages.DuplicateLeaseId(id, firstLine));
+                    duplicate = new Problem
+                    {
+                        Line = record.StartLine,
+                        LeaseId = id,
+                        Field = LeaseIdColumn,
+                        Code = General.ProblemMessages.DuplicateLeaseId,
+                        Message = ProblemMessages.DuplicateLeaseId(id, firstLine),
+                    };
                 }
                 else
                 {
@@ -79,7 +98,7 @@ internal static class LeaseImporter
         }
 
         problems.AddRange(parserProblems);
-        return new ImportResult(leases, problems);
+        return new ImportResult { Leases = leases, Problems = problems };
     }
 
     /// <summary>Writes the result as UTF-8 JSON straight to <paramref name="output"/>.</summary>
@@ -105,13 +124,25 @@ internal static class LeaseImporter
             var count = header.Count(name => string.Equals(name.Trim(), column, StringComparison.Ordinal));
             if (count == 0)
             {
-                problems.Add(new Problem(HeaderLine, null, column, General.ProblemMessages.MissingColumn,
-                    ProblemMessages.MissingColumn(column)));
+                problems.Add(new Problem
+                {
+                    Line = HeaderLine,
+                    LeaseId = null,
+                    Field = column,
+                    Code = General.ProblemMessages.MissingColumn,
+                    Message = ProblemMessages.MissingColumn(column),
+                });
             }
             else if (count > 1)
             {
-                problems.Add(new Problem(HeaderLine, null, column, General.ProblemMessages.DuplicateColumn,
-                    ProblemMessages.DuplicateColumn(column)));
+                problems.Add(new Problem
+                {
+                    Line = HeaderLine,
+                    LeaseId = null,
+                    Field = column,
+                    Code = General.ProblemMessages.DuplicateColumn,
+                    Message = ProblemMessages.DuplicateColumn(column),
+                });
             }
         }
         return problems;

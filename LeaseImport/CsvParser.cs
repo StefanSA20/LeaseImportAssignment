@@ -4,7 +4,11 @@ using static LeaseImport.Common.General.CsvParser;
 
 namespace LeaseImport;
 
-internal sealed record CsvRecord(int StartLine, IReadOnlyList<string> Fields);
+public class CsvRecord
+{
+    public int StartLine { get; set; }
+    public IReadOnlyList<string> Fields { get; set; } = [];
+}
 
 /// <summary>
 /// RFC 4180 tokenizer. Line numbers are physical lines starting at 1; a record keeps the line
@@ -12,7 +16,7 @@ internal sealed record CsvRecord(int StartLine, IReadOnlyList<string> Fields);
 /// Characters that RFC 4180 doesn't allow (a quote inside an unquoted field, text after a
 /// closing quote) are kept literally rather than rejected.
 /// </summary>
-internal static class CsvParser
+public static class CsvParser
 {
     private enum State { FieldStart, Unquoted, Quoted, QuoteInQuoted }
 
@@ -44,7 +48,7 @@ internal static class CsvParser
         CsvRecord? EndRecord()
         {
             EndField();
-            var record = recordHasContent ? new CsvRecord(recordStartLine, fields.ToArray()) : null;
+            var record = recordHasContent ? new CsvRecord { StartLine = recordStartLine, Fields = fields.ToArray() } : null;
             fields.Clear();
             recordHasContent = false;
             return record;
@@ -117,12 +121,14 @@ internal static class CsvParser
 
         if (state == State.Quoted)
         {
-            problems.Add(new Problem(
-                recordStartLine,
-                LeaseId: null,
-                Field: null,
-                General.ProblemMessages.UnclosedQuote,
-                ProblemMessages.UnclosedQuote(recordStartLine)));
+            problems.Add(new Problem
+            {
+                Line = recordStartLine,
+                LeaseId = null,
+                Field = null,
+                Code = General.ProblemMessages.UnclosedQuote,
+                Message = ProblemMessages.UnclosedQuote(recordStartLine),
+            });
         }
         else if (EndRecord() is { } last)
         {

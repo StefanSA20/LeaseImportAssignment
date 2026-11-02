@@ -1,27 +1,29 @@
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("LeaseImport.Tests")]
-
 namespace LeaseImport.Common;
 
-internal sealed record Lease(
-    int Line,
-    string LeaseId,
-    string AssetClass,
-    string Description,
-    string Currency,
-    decimal Opening,
-    decimal Additions,
-    decimal Depreciation,
-    decimal Disposals);
+public class Lease
+{
+    public int Line { get; set; }
+    public string LeaseId { get; set; } = string.Empty;
+    public string AssetClass { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public decimal Opening { get; set; }
+    public decimal Additions { get; set; }
+    public decimal Depreciation { get; set; }
+    public decimal Disposals { get; set; }
+}
 
-internal sealed record Problem(
-    int Line,
-    string? LeaseId,
-    string? Field,
-    string Code,
-    string Message);
+public class Problem
+{
+    public int Line { get; set; }
+    public string? LeaseId { get; set; }
+    public string? Field { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+}
 
-internal sealed record ImportResult(
-    IReadOnlyList<Lease> Leases,
-    IReadOnlyList<Problem> Problems);
+public class ImportResult
+{
+    public List<Lease> Leases { get; set; } = [];
+    public List<Problem> Problems { get; set; } = [];
+}

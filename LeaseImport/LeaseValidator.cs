@@ -4,12 +4,17 @@ using static LeaseImport.Common.General.LeaseValidator;
 
 namespace LeaseImport;
 
-internal sealed record ValidationResult(string? LeaseId, Lease? Lease, IReadOnlyList<Problem> Problems);
+public class ValidationResult
+{
+    public string? LeaseId { get; set; }
+    public Lease? Lease { get; set; }
+    public List<Problem> Problems { get; set; } = [];
+}
 
 /// <summary>
 /// Validates the values of one data row. Pure: no I/O, no culture dependence, no duplicate tracking.
 /// </summary>
-internal static class LeaseValidator
+public static class LeaseValidator
 {
     /// <param name="line">Physical line the record starts on.</param>
     /// <param name="fields">Raw (untrimmed) values of the record.</param>
@@ -24,7 +29,7 @@ internal static class LeaseValidator
         var problems = new List<Problem>();
 
         void Report(string field, string code, string message) =>
-            problems.Add(new Problem(line, problemLeaseId, field, code, message));
+            problems.Add(new Problem { Line = line, LeaseId = problemLeaseId, Field = field, Code = code, Message = message });
 
         void Require(string column, string value)
         {
@@ -84,11 +89,21 @@ internal static class LeaseValidator
 
         if (problems.Count > 0)
         {
-            return new ValidationResult(problemLeaseId, null, problems);
+            return new ValidationResult { LeaseId = problemLeaseId, Lease = null, Problems = problems };
         }
 
-        var lease = new Lease(line, leaseId, assetClass, description, currency,
-            opening, additions, depreciation, disposals);
-        return new ValidationResult(problemLeaseId, lease, problems);
+        var lease = new Lease
+        {
+            Line = line,
+            LeaseId = leaseId,
+            AssetClass = assetClass,
+            Description = description,
+            Currency = currency,
+            Opening = opening,
+            Additions = additions,
+            Depreciation = depreciation,
+            Disposals = disposals,
+        };
+        return new ValidationResult { LeaseId = problemLeaseId, Lease = lease, Problems = problems };
     }
 }

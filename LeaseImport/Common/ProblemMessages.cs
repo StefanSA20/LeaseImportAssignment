@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace LeaseImport.Common;
 
-internal static class ProblemMessages
+public static class ProblemMessages
 {
     public static string EmptyFile() =>
         "The file can't be processed because it is empty (no header line was found).";

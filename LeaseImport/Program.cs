@@ -4,7 +4,7 @@ using static LeaseImport.Common.General.Program;
 
 namespace LeaseImport;
 
-internal static class Program
+public static class Program
 {
     private static int Main(string[] args)
     {
