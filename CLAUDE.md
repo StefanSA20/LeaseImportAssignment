@@ -144,7 +144,7 @@ output. It gives a non-zero exit code and a message on stderr.
   can be reported as `NegativeAmount`), no
   thousands separators, no exponent, no NaN/Infinity, at most 2 decimals, and `>= 0`.
 - **Strict number format (agreed)**: the trimmed value must match
-  `^[+-]?(0|[1-9][0-9]*)(\.[0-9]+)?$`. So `1.` (no digits after the point), `.5` (no digit
+  `^[+-]?(0|[1-9][0-9]*)(\.[0-9]+)?$`, and a zero value may not have a `-` sign. So `1.` (no digits after the point), `.5` (no digit
   before it), `00012` / `01.5` (leading zeros) and `-0` / `-0.00` (zero with a minus sign) give
   `InvalidNumber`. `0`, `0.50`, `+0` and `+500.00` are valid. A value that fails the format gets
   only `InvalidNumber`. A well-formed value is then checked for `TooManyDecimals` and

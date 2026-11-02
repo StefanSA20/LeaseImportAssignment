@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using LeaseImport.Common;
 using static LeaseImport.Tests.TestData;
 
 namespace LeaseImport.Tests;
@@ -148,5 +149,74 @@ public class DanishCultureTests
 
         Assert.Equal(1202, problem.Line);
         Assert.Equal("This lease can't be processed because its ID 'L-1199' is not unique (it already appears on line 1201).", problem.Message);
+    }
+
+    // ---------- strict number format under da-DK ----------
+
+    [Theory]
+    [MemberData(nameof(LeaseValidatorTests.StrictFormatViolations), MemberType = typeof(LeaseValidatorTests))]
+    public void Strict_format_violations_give_only_InvalidNumber_under_da_DK(string text)
+    {
+        using var scope = new CultureScope(Danish);
+
+        foreach (var column in LeaseValidatorTests.AmountColumns)
+        {
+            var problem = LeaseValidatorTests.SingleProblem(LeaseValidatorTests.Validate((column, text)));
+
+            Assert.Equal("InvalidNumber", problem.Code);
+            Assert.Equal(column, problem.Field);
+            Assert.Equal(
+                $"This lease can't be processed because '{column}' has the value '{text}', which is not a valid amount. " +
+                "Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50.",
+                problem.Message);
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(LeaseValidatorTests.StrictFormatValidValues), MemberType = typeof(LeaseValidatorTests))]
+    public void Strict_format_valid_values_are_accepted_under_da_DK(string text, string expected)
+    {
+        using var scope = new CultureScope(Danish);
+
+        var result = LeaseValidatorTests.Validate(("Opening", text), ("Additions", text), ("Depreciation", text), ("Disposals", text));
+
+        Assert.Empty(result.Problems);
+        var value = decimal.Parse(expected, CultureInfo.InvariantCulture);
+        Assert.Equal(value, result.Lease!.Opening);
+        Assert.Equal(value, result.Lease.Additions);
+        Assert.Equal(value, result.Lease.Depreciation);
+        Assert.Equal(value, result.Lease.Disposals);
+    }
+
+    [Fact]
+    public void Negative_value_with_too_many_decimals_gives_both_problems_under_da_DK()
+    {
+        using var scope = new CultureScope(Danish);
+
+        var result = Import(Csv(Header, "L-1,Property,Office,DKK,-1.234,0,0,0"));
+
+        Assert.Empty(result.Leases);
+        Assert.Equal(2, result.Problems.Count);
+        Assert.Contains(new Problem(2, "L-1", "Opening", "TooManyDecimals",
+            "This lease can't be processed because 'Opening' has the value '-1.234', which has more than 2 decimals."),
+            result.Problems);
+        Assert.Contains(new Problem(2, "L-1", "Opening", "NegativeAmount",
+            "This lease can't be processed because 'Opening' has the value '-1.234', which is negative. Amounts must be 0 or more."),
+            result.Problems);
+    }
+
+    [Fact]
+    public void WriteJson_uses_dot_as_decimal_point_under_da_DK()
+    {
+        using var scope = new CultureScope(Danish);
+        var result = ImportSample();
+
+        using var stream = new MemoryStream();
+        LeaseImporter.WriteJson(result, stream);
+        var json = System.Text.Encoding.UTF8.GetString(stream.ToArray());
+
+        Assert.Equal(LeaseImporter.ToJson(result), json);
+        Assert.Contains("1250000.50", json);
+        Assert.DoesNotContain("1250000,50", json);
     }
 }

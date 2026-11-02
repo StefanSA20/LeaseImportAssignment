@@ -1,4 +1,6 @@
 using System.Text;
+using LeaseImport.Common;
+using static LeaseImport.Common.General.CsvParser;
 
 namespace LeaseImport;
 
@@ -14,16 +16,22 @@ internal sealed record CsvParseResult(IReadOnlyList<CsvRecord> Records, IReadOnl
 /// </summary>
 internal static class CsvParser
 {
-    private const char Quote = '"';
-    private const char Separator = ',';
-    private const char ByteOrderMark = '﻿';
-
     private enum State { FieldStart, Unquoted, Quoted, QuoteInQuoted }
 
+    /// <summary>Reads everything at once. Convenience for callers that don't need streaming.</summary>
     public static CsvParseResult Parse(TextReader reader)
     {
-        var records = new List<CsvRecord>();
         var problems = new List<Problem>();
+        var records = ReadRecords(reader, problems).ToList();
+        return new CsvParseResult(records, problems);
+    }
+
+    /// <summary>
+    /// Yields records lazily. Problems found by the tokenizer (an unclosed quote) are added to
+    /// <paramref name="problems"/> when the end of the input is reached.
+    /// </summary>
+    public static IEnumerable<CsvRecord> ReadRecords(TextReader reader, ICollection<Problem> problems)
+    {
         var fields = new List<string>();
         var field = new StringBuilder();
         var state = State.FieldStart;
@@ -31,7 +39,7 @@ internal static class CsvParser
         var recordStartLine = 1;
         var recordHasContent = false;
 
-        if (reader.Peek() == ByteOrderMark)
+        if (reader.Peek() == Bom)
         {
             reader.Read();
         }
@@ -43,15 +51,13 @@ internal static class CsvParser
             state = State.FieldStart;
         }
 
-        void EndRecord()
+        CsvRecord? EndRecord()
         {
             EndField();
-            if (recordHasContent)
-            {
-                records.Add(new CsvRecord(recordStartLine, fields.ToArray()));
-            }
+            var record = recordHasContent ? new CsvRecord(recordStartLine, fields.ToArray()) : null;
             fields.Clear();
             recordHasContent = false;
+            return record;
         }
 
         int next;
@@ -100,7 +106,10 @@ internal static class CsvParser
                     }
                     else if (isLineBreak)
                     {
-                        EndRecord();
+                        if (EndRecord() is { } record)
+                        {
+                            yield return record;
+                        }
                     }
                     else
                     {
@@ -122,15 +131,13 @@ internal static class CsvParser
                 recordStartLine,
                 LeaseId: null,
                 Field: null,
-                ProblemCodes.UnclosedQuote,
+                General.ProblemMessages.UnclosedQuote,
                 ProblemMessages.UnclosedQuote(recordStartLine)));
         }
-        else
+        else if (EndRecord() is { } last)
         {
-            EndRecord();
+            yield return last;
         }
-
-        return new CsvParseResult(records, problems);
     }
 
     private static bool IsBlankCharacter(char c) => c == ' ' || c == '\t';

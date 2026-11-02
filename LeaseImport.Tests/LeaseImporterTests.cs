@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using LeaseImport.Common;
 using static LeaseImport.Tests.TestData;
 
 namespace LeaseImport.Tests;
@@ -425,5 +426,61 @@ public class LeaseImporterTests
         using var doc = JsonDocument.Parse(LeaseImporter.ToJson(result));
 
         Assert.Equal("Kontor Århus \"Øst\" & <Co>", doc.RootElement.GetProperty("Leases")[0].GetProperty("Description").GetString());
+    }
+
+    // ---------- NBSP-only line (CLAUDE.md section 5) ----------
+
+    [Theory]
+    [InlineData("\n")]
+    [InlineData("\r\n")]
+    public void Line_with_only_a_non_breaking_space_is_not_blank_and_gives_InvalidFieldCount(string newline)
+    {
+        var csv = string.Join(newline, Header, Row1, "", "\u00A0", "  \t ", Row2) + newline;
+
+        var result = Import(csv);
+
+        Assert.Equal(new[] { 2, 6 }, result.Leases.Select(l => l.Line).ToArray());
+        Assert.Equal(new Problem(4, null, null, "InvalidFieldCount",
+            "This lease can't be processed because it has 1 values, but the header has 8 columns."),
+            Assert.Single(result.Problems));
+    }
+
+    [Fact]
+    public void Line_with_non_breaking_spaces_around_spaces_is_also_InvalidFieldCount()
+    {
+        var result = Import(Csv(Header, " \u00A0 ", Row1));
+
+        Assert.Equal(new Problem(2, null, null, "InvalidFieldCount",
+            "This lease can't be processed because it has 1 values, but the header has 8 columns."),
+            Assert.Single(result.Problems));
+        Assert.Equal(3, Assert.Single(result.Leases).Line);
+    }
+
+    // ---------- WriteJson (streaming) ----------
+
+    [Fact]
+    public void WriteJson_to_a_stream_gives_the_same_text_as_ToJson_without_bom()
+    {
+        var result = Import(Csv(Header, Row1, "L-2,Vehicles,Bil \"København\",dkk,1.250,0,0,0", "x,y"));
+
+        using var stream = new MemoryStream();
+        LeaseImporter.WriteJson(result, stream);
+        var bytes = stream.ToArray();
+
+        Assert.True(bytes.Length > 0);
+        Assert.False(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF, "WriteJson must not write a BOM");
+        var text = new System.Text.UTF8Encoding(false, true).GetString(bytes);
+        Assert.Equal(LeaseImporter.ToJson(result), text);
+    }
+
+    [Fact]
+    public void WriteJson_of_the_sample_matches_ToJson()
+    {
+        var result = ImportSample();
+
+        using var stream = new MemoryStream();
+        LeaseImporter.WriteJson(result, stream);
+
+        Assert.Equal(LeaseImporter.ToJson(result), System.Text.Encoding.UTF8.GetString(stream.ToArray()));
     }
 }

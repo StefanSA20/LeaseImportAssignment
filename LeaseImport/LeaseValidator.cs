@@ -1,4 +1,6 @@
 using System.Globalization;
+using LeaseImport.Common;
+using static LeaseImport.Common.General.LeaseValidator;
 
 namespace LeaseImport;
 
@@ -9,47 +11,13 @@ internal sealed record ValidationResult(string? LeaseId, Lease? Lease, IReadOnly
 /// </summary>
 internal static class LeaseValidator
 {
-    public const string LeaseIdColumn = "LeaseId";
-    public const string AssetClassColumn = "AssetClass";
-    public const string DescriptionColumn = "Description";
-    public const string CurrencyColumn = "Currency";
-    public const string OpeningColumn = "Opening";
-    public const string AdditionsColumn = "Additions";
-    public const string DepreciationColumn = "Depreciation";
-    public const string DisposalsColumn = "Disposals";
-
-    public static readonly IReadOnlyList<string> RequiredColumns =
-    [
-        LeaseIdColumn, AssetClassColumn, DescriptionColumn, CurrencyColumn,
-        OpeningColumn, AdditionsColumn, DepreciationColumn, DisposalsColumn,
-    ];
-
-    private const NumberStyles AmountStyles = NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint;
-    private const int MaxDecimals = 2;
-
-    /// <summary>Active ISO-4217 currency codes (circulating currencies, no fund/metal/test codes).</summary>
-    internal static readonly HashSet<string> ActiveCurrencyCodes = new(StringComparer.Ordinal)
-    {
-        "AED", "AFN", "ALL", "AMD", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT",
-        "BHD", "BIF", "BMD", "BND", "BOB", "BRL", "BSD", "BTN", "BWP", "BYN", "BZD", "CAD",
-        "CDF", "CHF", "CLP", "CNY", "COP", "CRC", "CUP", "CVE", "CZK", "DJF", "DKK", "DOP",
-        "DZD", "EGP", "ERN", "ETB", "EUR", "FJD", "FKP", "GBP", "GEL", "GHS", "GIP", "GMD",
-        "GNF", "GTQ", "GYD", "HKD", "HNL", "HTG", "HUF", "IDR", "ILS", "INR", "IQD", "IRR",
-        "ISK", "JMD", "JOD", "JPY", "KES", "KGS", "KHR", "KMF", "KPW", "KRW", "KWD", "KYD",
-        "KZT", "LAK", "LBP", "LKR", "LRD", "LSL", "LYD", "MAD", "MDL", "MGA", "MKD", "MMK",
-        "MNT", "MOP", "MRU", "MUR", "MVR", "MWK", "MXN", "MYR", "MZN", "NAD", "NGN", "NIO",
-        "NOK", "NPR", "NZD", "OMR", "PAB", "PEN", "PGK", "PHP", "PKR", "PLN", "PYG", "QAR",
-        "RON", "RSD", "RUB", "RWF", "SAR", "SBD", "SCR", "SDG", "SEK", "SGD", "SHP", "SLE",
-        "SOS", "SRD", "SSP", "STN", "SVC", "SYP", "SZL", "THB", "TJS", "TMT", "TND", "TOP",
-        "TRY", "TTD", "TWD", "TZS", "UAH", "UGX", "USD", "UYU", "UZS", "VED", "VES", "VND",
-        "VUV", "WST", "XAF", "XCD", "XCG", "XOF", "XPF", "YER", "ZAR", "ZMW", "ZWG",
-    };
-
     /// <param name="line">Physical line the record starts on.</param>
-    /// <param name="values">Raw (untrimmed) values by column name. A missing column counts as empty.</param>
-    public static ValidationResult Validate(int line, IReadOnlyDictionary<string, string> values)
+    /// <param name="fields">Raw (untrimmed) values of the record.</param>
+    /// <param name="columnIndex">Position of each column in <paramref name="fields"/>, built once from the header. A missing column counts as empty.</param>
+    public static ValidationResult Validate(int line, IReadOnlyList<string> fields, IReadOnlyDictionary<string, int> columnIndex)
     {
-        string Value(string column) => values.TryGetValue(column, out var raw) ? raw.Trim() : string.Empty;
+        string Value(string column) =>
+            columnIndex.TryGetValue(column, out var index) ? fields[index].Trim() : string.Empty;
 
         var leaseId = Value(LeaseIdColumn);
         string? problemLeaseId = leaseId.Length == 0 ? null : leaseId;
@@ -62,7 +30,7 @@ internal static class LeaseValidator
         {
             if (value.Length == 0)
             {
-                Report(column, ProblemCodes.MissingValue, ProblemMessages.MissingValue(column));
+                Report(column, General.ProblemMessages.MissingValue, ProblemMessages.MissingValue(column));
             }
         }
 
@@ -71,21 +39,23 @@ internal static class LeaseValidator
             var text = Value(column);
             if (text.Length == 0)
             {
-                Report(column, ProblemCodes.MissingValue, ProblemMessages.MissingValue(column));
+                Report(column, General.ProblemMessages.MissingValue, ProblemMessages.MissingValue(column));
                 return 0m;
             }
-            if (!decimal.TryParse(text, AmountStyles, CultureInfo.InvariantCulture, out var amount))
+            if (!AmountFormat.IsMatch(text)
+                || !decimal.TryParse(text, AmountStyles, CultureInfo.InvariantCulture, out var amount)
+                || (amount == 0m && text[0] == '-'))
             {
-                Report(column, ProblemCodes.InvalidNumber, ProblemMessages.InvalidNumber(column, text));
+                Report(column, General.ProblemMessages.InvalidNumber, ProblemMessages.InvalidNumber(column, text));
                 return 0m;
             }
             if (amount.Scale > MaxDecimals)
             {
-                Report(column, ProblemCodes.TooManyDecimals, ProblemMessages.TooManyDecimals(column, text));
+                Report(column, General.ProblemMessages.TooManyDecimals, ProblemMessages.TooManyDecimals(column, text));
             }
             if (amount < 0m)
             {
-                Report(column, ProblemCodes.NegativeAmount, ProblemMessages.NegativeAmount(column, text));
+                Report(column, General.ProblemMessages.NegativeAmount, ProblemMessages.NegativeAmount(column, text));
             }
             return amount;
         }
@@ -104,7 +74,7 @@ internal static class LeaseValidator
         }
         else if (!ActiveCurrencyCodes.Contains(currency))
         {
-            Report(CurrencyColumn, ProblemCodes.InvalidCurrency, ProblemMessages.InvalidCurrency(currency));
+            Report(CurrencyColumn, General.ProblemMessages.InvalidCurrency, ProblemMessages.InvalidCurrency(currency));
         }
 
         var opening = Amount(OpeningColumn);

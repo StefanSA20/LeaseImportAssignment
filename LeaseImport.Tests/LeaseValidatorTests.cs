@@ -1,4 +1,6 @@
-﻿namespace LeaseImport.Tests;
+﻿using LeaseImport.Common;
+
+namespace LeaseImport.Tests;
 
 public class LeaseValidatorTests
 {
@@ -25,7 +27,12 @@ public class LeaseValidatorTests
     }
 
     internal static ValidationResult Validate(params (string Column, string Value)[] overrides) =>
-        LeaseValidator.Validate(Line, ValidRow(overrides));
+        ValidateRow(Line, ValidRow(overrides));
+
+    /// <summary>Calls the validator with the row's values as fields and the column positions taken from its keys.</summary>
+    internal static ValidationResult ValidateRow(int line, Dictionary<string, string> row) =>
+        LeaseValidator.Validate(line, row.Values.ToArray(),
+            row.Keys.Select((column, index) => (column, index)).ToDictionary(c => c.column, c => c.index, StringComparer.Ordinal));
 
     internal static Problem SingleProblem(ValidationResult result)
     {
@@ -40,7 +47,7 @@ public class LeaseValidatorTests
     [Fact]
     public void Valid_row_gives_lease_with_trimmed_values_and_no_problems()
     {
-        var result = LeaseValidator.Validate(2, ValidRow(
+        var result = ValidateRow(2, ValidRow(
             ("LeaseId", "  L-2001 "), ("AssetClass", " Property "), ("Description", "  Office Aarhus  "),
             ("Currency", " DKK "), ("Opening", " 1250000.50 "), ("Additions", "0"),
             ("Depreciation", "\t125000.05\t"), ("Disposals", "0")));
@@ -83,7 +90,8 @@ public class LeaseValidatorTests
     [InlineData("12.5", "12.5")]
     [InlineData("+500.00", "500.00")]
     [InlineData("  42  ", "42")]
-    [InlineData("-0", "0")]
+    [InlineData("0.50", "0.50")]
+    [InlineData("+0", "0")]
     [InlineData("99999999999999.99", "99999999999999.99")]
     public void Valid_amounts_are_parsed_exactly(string text, string expected)
     {
@@ -193,6 +201,7 @@ public class LeaseValidatorTests
     [InlineData("--5")]
     [InlineData("1.2.3")]
     [InlineData("5-")]
+    [InlineData("-0")]
     public void Invalid_numbers_give_InvalidNumber_with_exact_message(string text)
     {
         foreach (var column in AmountColumns)
@@ -205,6 +214,70 @@ public class LeaseValidatorTests
                 $"This lease can't be processed because '{column}' has the value '{text.Trim()}', which is not a valid amount. " +
                 "Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50.",
                 problem.Message);
+        }
+    }
+
+    // Strict number format (CLAUDE.md section 5): ^[+-]?(0|[1-9][0-9]*)(\.[0-9]+)?$ and no minus on zero.
+    // A value that fails the format gets ONLY InvalidNumber (no TooManyDecimals / NegativeAmount).
+    public static readonly TheoryData<string> StrictFormatViolations = new()
+    {
+        "1.", ".5", "00012", "01.5", "-0", "-0.00", "-00012", "-.5", "+.5", "-1.", "00", "-01.234",
+    };
+
+    [Theory]
+    [MemberData(nameof(StrictFormatViolations))]
+    public void Strict_format_violations_give_only_InvalidNumber_with_exact_message(string text)
+    {
+        foreach (var column in AmountColumns)
+        {
+            var problem = SingleProblem(Validate((column, text)));
+
+            Assert.Equal(new Problem(Line, "L-1", column, "InvalidNumber",
+                $"This lease can't be processed because '{column}' has the value '{text}', which is not a valid amount. " +
+                "Use digits with '.' as the decimal point and no thousands separators, e.g. 1250000.50."),
+                problem);
+        }
+    }
+
+    public static readonly TheoryData<string, string> StrictFormatValidValues = new()
+    {
+        { "0", "0" },
+        { "0.50", "0.50" },
+        { "+0", "0" },
+        { "+500.00", "500.00" },
+        { "0.5", "0.5" },
+        { "10", "10" },
+    };
+
+    [Theory]
+    [MemberData(nameof(StrictFormatValidValues))]
+    public void Strict_format_valid_values_are_accepted(string text, string expected)
+    {
+        var result = Validate(("Opening", text), ("Additions", text), ("Depreciation", text), ("Disposals", text));
+
+        Assert.Empty(result.Problems);
+        var value = decimal.Parse(expected, System.Globalization.CultureInfo.InvariantCulture);
+        Assert.Equal(value, result.Lease!.Opening);
+        Assert.Equal(value, result.Lease.Additions);
+        Assert.Equal(value, result.Lease.Depreciation);
+        Assert.Equal(value, result.Lease.Disposals);
+    }
+
+    [Fact]
+    public void Negative_value_with_too_many_decimals_gives_TooManyDecimals_and_NegativeAmount()
+    {
+        foreach (var column in AmountColumns)
+        {
+            var result = Validate((column, "-1.234"));
+
+            Assert.Null(result.Lease);
+            Assert.Equal(2, result.Problems.Count);
+            Assert.Contains(new Problem(Line, "L-1", column, "TooManyDecimals",
+                $"This lease can't be processed because '{column}' has the value '-1.234', which has more than 2 decimals."),
+                result.Problems);
+            Assert.Contains(new Problem(Line, "L-1", column, "NegativeAmount",
+                $"This lease can't be processed because '{column}' has the value '-1.234', which is negative. Amounts must be 0 or more."),
+                result.Problems);
         }
     }
 
@@ -389,8 +462,8 @@ public class LeaseValidatorTests
         Assert.Equal(
             new[] { "EmptyFile", "MissingColumn", "DuplicateColumn", "UnclosedQuote", "InvalidFieldCount", "MissingValue",
                     "InvalidNumber", "TooManyDecimals", "NegativeAmount", "InvalidCurrency", "DuplicateLeaseId" },
-            new[] { ProblemCodes.EmptyFile, ProblemCodes.MissingColumn, ProblemCodes.DuplicateColumn, ProblemCodes.UnclosedQuote,
-                    ProblemCodes.InvalidFieldCount, ProblemCodes.MissingValue, ProblemCodes.InvalidNumber, ProblemCodes.TooManyDecimals,
-                    ProblemCodes.NegativeAmount, ProblemCodes.InvalidCurrency, ProblemCodes.DuplicateLeaseId });
+            new[] { General.ProblemMessages.EmptyFile, General.ProblemMessages.MissingColumn, General.ProblemMessages.DuplicateColumn, General.ProblemMessages.UnclosedQuote,
+                    General.ProblemMessages.InvalidFieldCount, General.ProblemMessages.MissingValue, General.ProblemMessages.InvalidNumber, General.ProblemMessages.TooManyDecimals,
+                    General.ProblemMessages.NegativeAmount, General.ProblemMessages.InvalidCurrency, General.ProblemMessages.DuplicateLeaseId });
     }
 }

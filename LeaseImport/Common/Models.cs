@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("LeaseImport.Tests")]
 
-namespace LeaseImport;
+namespace LeaseImport.Common;
 
 internal sealed record Lease(
     int Line,

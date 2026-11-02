@@ -1,21 +1,6 @@
 using System.Globalization;
 
-namespace LeaseImport;
-
-internal static class ProblemCodes
-{
-    public const string EmptyFile = "EmptyFile";
-    public const string MissingColumn = "MissingColumn";
-    public const string DuplicateColumn = "DuplicateColumn";
-    public const string UnclosedQuote = "UnclosedQuote";
-    public const string InvalidFieldCount = "InvalidFieldCount";
-    public const string MissingValue = "MissingValue";
-    public const string InvalidNumber = "InvalidNumber";
-    public const string TooManyDecimals = "TooManyDecimals";
-    public const string NegativeAmount = "NegativeAmount";
-    public const string InvalidCurrency = "InvalidCurrency";
-    public const string DuplicateLeaseId = "DuplicateLeaseId";
-}
+namespace LeaseImport.Common;
 
 internal static class ProblemMessages
 {

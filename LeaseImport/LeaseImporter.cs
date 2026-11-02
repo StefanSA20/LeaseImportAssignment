@@ -1,68 +1,64 @@
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using LeaseImport.Common;
+using static LeaseImport.Common.General.LeaseImporter;
+using static LeaseImport.Common.General.LeaseValidator;
 
 namespace LeaseImport;
 
 /// <summary>
 /// Orchestrates one import: header check, field counts, value validation, duplicate LeaseIds.
+/// The input is read record by record; only the result (leases and problems) is kept in memory.
 /// </summary>
 internal static class LeaseImporter
 {
-    private const int HeaderLine = 1;
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.Never,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    };
-
     public static ImportResult Import(TextReader reader)
     {
-        var parsed = CsvParser.Parse(reader);
         var leases = new List<Lease>();
         var problems = new List<Problem>();
+        var parserProblems = new List<Problem>();
 
-        if (parsed.Records.Count == 0)
+        using var records = CsvParser.ReadRecords(reader, parserProblems).GetEnumerator();
+
+        if (!records.MoveNext())
         {
-            if (parsed.Problems.Count == 0)
+            if (parserProblems.Count == 0)
             {
-                problems.Add(new Problem(HeaderLine, null, null, ProblemCodes.EmptyFile, ProblemMessages.EmptyFile()));
+                problems.Add(new Problem(HeaderLine, null, null, General.ProblemMessages.EmptyFile, ProblemMessages.EmptyFile()));
             }
-            problems.AddRange(parsed.Problems);
+            problems.AddRange(parserProblems);
             return new ImportResult(leases, problems);
         }
 
-        var header = parsed.Records[0].Fields;
+        var header = records.Current.Fields;
         var headerProblems = CheckHeader(header);
         if (headerProblems.Count > 0)
         {
+            ReadToEnd(records);
             return new ImportResult(leases, headerProblems);
         }
 
         var columnIndex = BuildColumnIndex(header);
         var firstLineById = new Dictionary<string, int>(StringComparer.Ordinal);
 
-        foreach (var record in parsed.Records.Skip(1))
+        while (records.MoveNext())
         {
+            var record = records.Current;
             if (record.Fields.Count != header.Count)
             {
-                problems.Add(new Problem(record.StartLine, null, null, ProblemCodes.InvalidFieldCount,
+                problems.Add(new Problem(record.StartLine, null, null, General.ProblemMessages.InvalidFieldCount,
                     ProblemMessages.InvalidFieldCount(record.Fields.Count, header.Count)));
                 continue;
             }
 
-            var values = columnIndex.ToDictionary(c => c.Key, c => record.Fields[c.Value], StringComparer.Ordinal);
-            var result = LeaseValidator.Validate(record.StartLine, values);
+            var result = LeaseValidator.Validate(record.StartLine, record.Fields, columnIndex);
 
             Problem? duplicate = null;
             if (result.LeaseId is { } id)
             {
                 if (firstLineById.TryGetValue(id, out var firstLine))
                 {
-                    duplicate = new Problem(record.StartLine, id, LeaseValidator.LeaseIdColumn,
-                        ProblemCodes.DuplicateLeaseId, ProblemMessages.DuplicateLeaseId(id, firstLine));
+                    duplicate = new Problem(record.StartLine, id, LeaseIdColumn,
+                        General.ProblemMessages.DuplicateLeaseId, ProblemMessages.DuplicateLeaseId(id, firstLine));
                 }
                 else
                 {
@@ -82,26 +78,41 @@ internal static class LeaseImporter
             }
         }
 
-        problems.AddRange(parsed.Problems);
+        problems.AddRange(parserProblems);
         return new ImportResult(leases, problems);
     }
 
+    /// <summary>Writes the result as UTF-8 JSON straight to <paramref name="output"/>.</summary>
+    public static void WriteJson(ImportResult result, Stream output) =>
+        JsonSerializer.Serialize(output, result, JsonOptions);
+
     public static string ToJson(ImportResult result) => JsonSerializer.Serialize(result, JsonOptions);
+
+    /// <summary>
+    /// Reads the rest of the input after a fatal header, so that the whole file is still decoded
+    /// (invalid UTF-8 anywhere makes the input unreadable). Its records are not used.
+    /// </summary>
+    private static void ReadToEnd(IEnumerator<CsvRecord> records)
+    {
+        while (records.MoveNext())
+        {
+        }
+    }
 
     private static List<Problem> CheckHeader(IReadOnlyList<string> header)
     {
         var problems = new List<Problem>();
-        foreach (var column in LeaseValidator.RequiredColumns)
+        foreach (var column in RequiredColumns)
         {
             var count = header.Count(name => string.Equals(name.Trim(), column, StringComparison.Ordinal));
             if (count == 0)
             {
-                problems.Add(new Problem(HeaderLine, null, column, ProblemCodes.MissingColumn,
+                problems.Add(new Problem(HeaderLine, null, column, General.ProblemMessages.MissingColumn,
                     ProblemMessages.MissingColumn(column)));
             }
             else if (count > 1)
             {
-                problems.Add(new Problem(HeaderLine, null, column, ProblemCodes.DuplicateColumn,
+                problems.Add(new Problem(HeaderLine, null, column, General.ProblemMessages.DuplicateColumn,
                     ProblemMessages.DuplicateColumn(column)));
             }
         }
@@ -114,7 +125,7 @@ internal static class LeaseImporter
         for (var i = 0; i < header.Count; i++)
         {
             var name = header[i].Trim();
-            if (LeaseValidator.RequiredColumns.Contains(name))
+            if (RequiredColumns.Contains(name))
             {
                 index[name] = i;
             }

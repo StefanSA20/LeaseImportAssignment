@@ -1,16 +1,11 @@
 using System.Text;
+using LeaseImport.Common;
+using static LeaseImport.Common.General.Program;
 
 namespace LeaseImport;
 
 internal static class Program
 {
-    private const int Success = 0;
-    private const int UsageError = 1;
-    private const int InputError = 2;
-    private const int OutputError = 3;
-
-    private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
-
     private static int Main(string[] args)
     {
         if (args.Length is < 1 or > 2)
@@ -20,11 +15,17 @@ internal static class Program
         }
 
         var inputPath = args[0];
-        string json;
+        ImportResult result;
         try
         {
-            using var reader = new StreamReader(inputPath, Utf8NoBom, detectEncodingFromByteOrderMarks: true);
-            json = LeaseImporter.ToJson(LeaseImporter.Import(reader));
+            using var reader = new StreamReader(inputPath, StrictUtf8, detectEncodingFromByteOrderMarks: false);
+            result = LeaseImporter.Import(reader);
+        }
+        // NOTE: strict UTF-8 decision — to be double-checked by the user.
+        catch (DecoderFallbackException ex)
+        {
+            Console.Error.WriteLine($"The input file '{inputPath}' is not valid UTF-8 and can't be read: {ex.Message}");
+            return InputError;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
@@ -34,15 +35,16 @@ internal static class Program
 
         if (args.Length == 1)
         {
-            Console.OutputEncoding = Utf8NoBom;
-            Console.Out.WriteLine(json);
+            using var stdout = Console.OpenStandardOutput();
+            WriteJsonLine(result, stdout);
             return Success;
         }
 
         var outputPath = args[1];
         try
         {
-            File.WriteAllText(outputPath, json + Environment.NewLine, Utf8NoBom);
+            using var output = File.Create(outputPath);
+            WriteJsonLine(result, output);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
@@ -50,5 +52,11 @@ internal static class Program
             return OutputError;
         }
         return Success;
+    }
+
+    private static void WriteJsonLine(ImportResult result, Stream output)
+    {
+        LeaseImporter.WriteJson(result, output);
+        output.Write(Utf8NoBom.GetBytes(Environment.NewLine));
     }
 }

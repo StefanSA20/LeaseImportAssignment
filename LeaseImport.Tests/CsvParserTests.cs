@@ -1,4 +1,6 @@
-﻿namespace LeaseImport.Tests;
+﻿using LeaseImport.Common;
+
+namespace LeaseImport.Tests;
 
 public class CsvParserTests
 {
@@ -185,5 +187,101 @@ public class CsvParserTests
         var result = Parse("a,b\n  x  , y ");
 
         Assert.Equal(["  x  ", " y "], result.Records[1].Fields);
+    }
+
+    // ---------- NBSP is not blank ----------
+
+    [Fact]
+    public void Line_with_only_a_non_breaking_space_is_a_record_with_one_field()
+    {
+        var result = Parse("a,b\n\u00A0\n1,2\n");
+
+        Assert.Equal(new[] { 1, 2, 3 }, Lines(result));
+        Assert.Equal(new[] { "\u00A0" }, Fields(result)[1]);
+    }
+
+    // ---------- laziness (streaming) ----------
+
+    /// <summary>Serves a fixed prefix, then throws if anything past it is read.</summary>
+    private sealed class TrapReader(string prefix) : TextReader
+    {
+        private int _position;
+
+        public int CharsRead => _position;
+
+        public override int Peek() => _position < prefix.Length ? prefix[_position] : throw new InvalidOperationException("Read past the allowed prefix");
+
+        public override int Read() => _position < prefix.Length ? prefix[_position++] : throw new InvalidOperationException("Read past the allowed prefix");
+
+        public override int Read(char[] buffer, int index, int count) => throw new InvalidOperationException("Bulk read");
+
+        public override string ReadToEnd() => throw new InvalidOperationException("ReadToEnd");
+    }
+
+    [Fact]
+    public void ReadRecords_yields_the_first_record_before_reading_the_rest()
+    {
+        // Only the header and the start of line 2 are available. Reading further throws.
+        var reader = new TrapReader("a,b\n1");
+        var problems = new List<Problem>();
+
+        using var records = CsvParser.ReadRecords(reader, problems).GetEnumerator();
+
+        Assert.True(records.MoveNext());
+        Assert.Equal(1, records.Current.StartLine);
+        Assert.Equal(new[] { "a", "b" }, records.Current.Fields);
+        Assert.True(reader.CharsRead <= "a,b\n1".Length);
+        Assert.Empty(problems);
+    }
+
+    [Fact]
+    public void ReadRecords_does_not_read_ahead_more_than_needed()
+    {
+        var text = "a,b\n1,2\n3,4\n";
+        var reader = new TrapReader(text);
+
+        using var records = CsvParser.ReadRecords(reader, new List<Problem>()).GetEnumerator();
+
+        Assert.True(records.MoveNext());
+        var afterFirst = reader.CharsRead;
+        Assert.True(records.MoveNext());
+        var afterSecond = reader.CharsRead;
+
+        Assert.True(afterFirst <= "a,b\n1".Length, $"read {afterFirst} chars before yielding record 1");
+        Assert.True(afterSecond < text.Length, $"read {afterSecond} chars before yielding record 2");
+        Assert.True(afterSecond > afterFirst);
+    }
+
+    [Fact]
+    public void ReadRecords_on_a_huge_generated_input_yields_first_record_after_reading_only_a_little()
+    {
+        var reader = new CountingInfiniteReader("a,b\n", "1,2\n");
+
+        var first = CsvParser.ReadRecords(reader, new List<Problem>()).First();
+
+        Assert.Equal(new[] { "a", "b" }, first.Fields);
+        Assert.True(reader.CharsRead < 100, $"read {reader.CharsRead} chars");
+    }
+
+    /// <summary>A header followed by an endless repetition of a row; counts characters handed out.</summary>
+    private sealed class CountingInfiniteReader(string header, string row) : TextReader
+    {
+        public long CharsRead { get; private set; }
+
+        private char CharAt(long position) =>
+            position < header.Length ? header[(int)position] : row[(int)((position - header.Length) % row.Length)];
+
+        public override int Peek() => CharAt(CharsRead);
+
+        public override int Read() => CharAt(CharsRead++);
+
+        public override int Read(char[] buffer, int index, int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                buffer[index + i] = CharAt(CharsRead++);
+            }
+            return count;
+        }
     }
 }

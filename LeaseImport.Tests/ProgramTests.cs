@@ -102,4 +102,85 @@ public sealed class ProgramTests : IDisposable
         var bytes = File.ReadAllBytes(output);
         Assert.NotEqual(0xEF, bytes[0]);
     }
+
+    // ---------- strict UTF-8 (CLAUDE.md section 5) ----------
+
+    [Fact]
+    public void Cp1252_input_gives_exit_code_2_stderr_mentioning_utf8_and_no_output()
+    {
+        var input = Path.Combine(_dir, "ansi.csv");
+        // "Kontor Århus" / "København" as Windows-1252: 0xC5 = 'Å', 0xF8 = 'ø'. Both are invalid UTF-8 here.
+        var bytes = new List<byte>();
+        bytes.AddRange(System.Text.Encoding.ASCII.GetBytes(TestData.Header + "\r\nL-1,Property,Kontor K"));
+        bytes.Add(0xF8);
+        bytes.AddRange(System.Text.Encoding.ASCII.GetBytes("benhavn,DKK,100.00,0,10.00,0\r\n"));
+        File.WriteAllBytes(input, bytes.ToArray());
+        var output = Path.Combine(_dir, "out.json");
+
+        var (exitCode, stdErr) = Run(input, output);
+
+        Assert.Equal(2, exitCode);
+        Assert.Contains("UTF-8", stdErr);
+        Assert.False(File.Exists(output));
+    }
+
+    [Fact]
+    public void Invalid_utf8_late_in_the_file_still_gives_exit_code_2_and_no_output()
+    {
+        var input = Path.Combine(_dir, "late.csv");
+        var text = new System.Text.StringBuilder(TestData.Header + "\n");
+        for (var i = 0; i < 5000; i++)
+        {
+            text.Append($"L-{i},Property,Office,DKK,1,0,0,0\n");
+        }
+        var bytes = new List<byte>(System.Text.Encoding.ASCII.GetBytes(text.ToString()));
+        bytes.AddRange(System.Text.Encoding.ASCII.GetBytes("L-x,Property,K"));
+        bytes.Add(0xF8);
+        bytes.AddRange(System.Text.Encoding.ASCII.GetBytes("benhavn,DKK,1,0,0,0\n"));
+        File.WriteAllBytes(input, bytes.ToArray());
+        var output = Path.Combine(_dir, "out.json");
+
+        var (exitCode, stdErr) = Run(input, output);
+
+        Assert.Equal(2, exitCode);
+        Assert.Contains("UTF-8", stdErr);
+        Assert.False(File.Exists(output));
+    }
+
+    [Fact]
+    public void Invalid_utf8_after_a_fatal_header_still_gives_exit_code_2()
+    {
+        var input = Path.Combine(_dir, "badheader.csv");
+        var bytes = new List<byte>(System.Text.Encoding.ASCII.GetBytes("LeaseId,AssetClass\nL-1,K"));
+        bytes.Add(0xF8);
+        bytes.AddRange(System.Text.Encoding.ASCII.GetBytes("b\n"));
+        File.WriteAllBytes(input, bytes.ToArray());
+        var output = Path.Combine(_dir, "out.json");
+
+        var (exitCode, stdErr) = Run(input, output);
+
+        Assert.Equal(2, exitCode);
+        Assert.Contains("UTF-8", stdErr);
+        Assert.False(File.Exists(output));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Valid_utf8_with_danish_letters_is_imported(bool withBom)
+    {
+        var input = Path.Combine(_dir, "utf8.csv");
+        var text = TestData.Header + "\r\nL-1,Property,Kontor København Ærø,DKK,100.00,0,10.00,0\r\n";
+        File.WriteAllBytes(input, new System.Text.UTF8Encoding(withBom).GetPreamble().Concat(new System.Text.UTF8Encoding(false).GetBytes(text)).ToArray());
+        var output = Path.Combine(_dir, "out.json");
+
+        var (exitCode, _) = Run(input, output);
+
+        Assert.Equal(0, exitCode);
+        using var doc = JsonDocument.Parse(File.ReadAllText(output));
+        var lease = Assert.Single(doc.RootElement.GetProperty("Leases").EnumerateArray());
+        Assert.Equal("L-1", lease.GetProperty("LeaseId").GetString());
+        Assert.Equal("Kontor København Ærø", lease.GetProperty("Description").GetString());
+        Assert.Equal(0, doc.RootElement.GetProperty("Problems").GetArrayLength());
+    }
 }
