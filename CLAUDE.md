@@ -207,6 +207,12 @@ function calculate(leasesJson, answers)    // = calculateFields(buildInput(lease
   MixedCurrency, SummaryRequired, TotalClosing, AverageClosing, ShowRouDisclosure,
   ShowMaturityAnalysis, ShowSubleaseDisclosure, ShowCashOutflow`. No extra fields.
 
+- **Broken input throws (agreed)**: `buildInput`/`calculate` throw an `Error` (never return a
+  result) when `leasesJson` isn't a string, `answers` isn't a plain object, the parsed JSON
+  isn't an object, `Leases`/`Problems` isn't an array, or an amount isn't a finite number.
+  Invalid JSON lets the exception from `JsonParser.parse` through. Answers that are valid
+  objects but hold invalid values are NOT errors (three-valued logic below).
+
 ### Answer values (exact match, case-sensitive)
 - Framework: `"IFRS"` | `"LocalGAAP"`
 - EntitySize: `"Micro"` | `"Small"` | `"Medium"` | `"Large"`
