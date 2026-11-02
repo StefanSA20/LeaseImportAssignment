@@ -1,0 +1,8 @@
+﻿LeaseId,AssetClass,Description,Currency,Opening,Additions,Depreciation,Disposals
+L-3001,Property,Head office Copenhagen,DKK,1000000.00,50000.00,100000.00,0
+L-3002,Vehicles,Delivery van,DKK,250000.25,0,50000.10,0
+L-3001,Equipment,Duplicate id,DKK,999.99,0,0,0
+L-3003,Equipment,"Danish number, rejected",DKK,"1.250,50",0,0,0
+L-3004,Property,Invalid currency,XYZ,1000.00,0,0,0
+L-3005,Equipment,Laptops,DKK,30000.00,0,10000.01,0.00
+L-3006,Property,Rejected EUR lease,EUR,abc,0,0,0

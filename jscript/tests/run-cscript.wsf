@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Windows Script Host runner for the ES3 tests:
+    cscript //nologo jscript\tests\run-cscript.wsf
+  Classic JScript has no JSON object, so this host supplies JsonParser.parse (validated eval,
+  as in json2.js) and loads the C# fixtures as UTF-8 through ADODB.Stream.
+-->
+<package>
+  <job id="LeaseCalculatorTests">
+    <script language="JScript"><![CDATA[
+      var JsonParser = {
+        // Accepts only JSON text (json2.js validation), then evaluates it.
+        parse: function (text) {
+          if (typeof text !== "string") {
+            throw new Error("JsonParser.parse: text must be a string.");
+          }
+          var checked = text
+            .replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, "@")
+            .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, "]")
+            .replace(/(?:^|:|,)(?:\s*\[)+/g, "");
+          if (!/\S/.test(text) || !/^[\],:{}\s]*$/.test(checked)) {
+            throw new Error("JsonParser.parse: invalid JSON.");
+          }
+          return eval("(" + text + ")");
+        }
+      };
+
+      var Fixtures = (function () {
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
+        var fixturesDir = fso.BuildPath(fso.GetParentFolderName(WScript.ScriptFullName), "fixtures");
+
+        function readUtf8(name) {
+          var file = fso.BuildPath(fixturesDir, name);
+          if (!fso.FileExists(file)) {
+            throw new Error("Fixture not found: " + file);
+          }
+          var stream = new ActiveXObject("ADODB.Stream");
+          stream.Type = 2; // adTypeText
+          stream.Charset = "utf-8";
+          stream.Open();
+          stream.LoadFromFile(file);
+          var text = stream.ReadText(-1); // adReadAll
+          stream.Close();
+          if (text.charCodeAt(0) === 0xFEFF) {
+            text = text.substring(1);
+          }
+          return text;
+        }
+
+        return {
+          leases: readUtf8("leases.json"),
+          leasesWithProblems: readUtf8("leases_with_problems.json")
+        };
+      })();
+    ]]></script>
+    <script language="JScript" src="TestRunner.js"/>
+    <script language="JScript" src="../LeaseCalculator.js"/>
+    <script language="JScript" src="LeaseCalculatorTests.js"/>
+    <script language="JScript"><![CDATA[
+      var failedCount = TestRunner.run(function (text) { WScript.Echo(text); });
+      WScript.Quit(failedCount === 0 ? 0 : 1);
+    ]]></script>
+  </job>
+</package>
